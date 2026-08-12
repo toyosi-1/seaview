@@ -2,10 +2,13 @@
   command = "npm run build"
   publish = ".next"
 
-[build.environment]
-  NEXT_PUBLIC_SUPABASE_URL = ""
-  NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
-  SUPABASE_SERVICE_ROLE_KEY = ""
+# Environment variables are set via Netlify dashboard or CLI
+# (netlify env:set KEY value) — do NOT define them here with
+# empty values, as that overrides dashboard/CLI-set values.
+# Required:
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   SUPABASE_SERVICE_ROLE_KEY
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
