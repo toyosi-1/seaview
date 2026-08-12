@@ -1,6 +1,9 @@
 -- ============================================================
--- Configure email notification trigger with hardcoded values
--- (ALTER DATABASE SET not available to postgres role)
+-- Configure email notification trigger
+-- Reads edge function URL and service role key from GUC settings
+-- Run after deploying: set via Supabase SQL Editor:
+--   alter database postgres set app.supabase_edge_url to 'https://bwdbxtnzmrzfbonbpikv.supabase.co/functions/v1/send-email-notification';
+--   alter database postgres set app.supabase_service_key to '<your-service-role-key>';
 -- ============================================================
 
 create or replace function public.send_email_notification()
@@ -9,9 +12,17 @@ language plpgsql
 security definer
 as $$
 declare
-  edge_url text := 'https://bwdbxtnzmrzfbonbpikv.supabase.co/functions/v1/send-email-notification';
-  service_key text := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3ZGJ4dG56bXJ6ZmJvbmJwaWt2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTM0MDQ3MCwiZXhwIjoyMTAwOTE2NDcwfQ.r3avTXou1eS2jQzFCipeS4v2b5EF8zZ8mx2sxZch3Fs';
+  edge_url text;
+  service_key text;
 begin
+  edge_url := current_setting('app.supabase_edge_url', true);
+  service_key := current_setting('app.supabase_service_key', true);
+
+  if edge_url is null or service_key is null then
+    -- Settings not configured — skip silently
+    return new;
+  end if;
+
   perform net.http_post(
     url := edge_url,
     headers := jsonb_build_object(
