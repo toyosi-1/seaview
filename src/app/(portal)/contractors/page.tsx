@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,11 +10,8 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, Contractor, ContractorStatus } from '@/types/database'
 
 export default async function ContractorsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -52,10 +49,10 @@ export default async function ContractorsPage() {
                 <Link
                   key={c.id}
                   href={`/contractors/${c.id}`}
-                  className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-amber-50 transition-colors group border border-transparent hover:border-amber-200"
+                  className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-spl-warning-bg transition-colors group border border-transparent hover:border-amber-200"
                 >
-                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-6 h-6 text-amber-600" />
+                  <div className="w-12 h-12 rounded-full bg-spl-warning-bg flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-6 h-6 text-spl-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800 text-base truncate">{c.company_name}</p>
@@ -92,8 +89,8 @@ export default async function ContractorsPage() {
                   href={`/contractors/${c.id}`}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                 >
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-6 h-6 text-spl-blue" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800 text-base truncate">{c.company_name}</p>

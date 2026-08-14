@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,11 +10,8 @@ import { formatCurrency, formatDate } from '@/lib/utils/format'
 import type { Profile, InternalProcurementRequest, InternalProcurementStatus } from '@/types/database'
 
 export default async function InternalProcurementPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
   if (!STAFF_ROLES.includes(p.role)) redirect('/dashboard')
@@ -36,7 +33,7 @@ export default async function InternalProcurementPage() {
             {canReview ? 'All departmental procurement requests' : 'Your department procurement requests'}
           </p>
         </div>
-        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-6 text-base font-semibold">
+        <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-6 text-base font-semibold">
           <Link href="/internal-procurement/new">
             <Plus className="w-5 h-5 mr-2" />
             New Request
@@ -67,7 +64,7 @@ export default async function InternalProcurementPage() {
             <div className="text-center py-16 text-slate-400">
               <ShoppingCart className="w-14 h-14 mx-auto mb-3 opacity-30" />
               <p className="text-lg font-medium">No procurement requests yet</p>
-              <Button asChild className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
+              <Button asChild className="mt-4 bg-spl-blue hover:bg-spl-blue-dark text-white">
                 <Link href="/internal-procurement/new">Submit your first request</Link>
               </Button>
             </div>
@@ -81,8 +78,8 @@ export default async function InternalProcurementPage() {
                     href={`/internal-procurement/${req.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <ShoppingCart className="w-5 h-5 text-blue-600" />
+                    <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart className="w-5 h-5 text-spl-blue" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-base truncate">{req.item_description}</p>

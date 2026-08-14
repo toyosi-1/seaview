@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,8 +10,7 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, UserRole } from '@/types/database'
 
 export default async function UsersPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -52,7 +51,7 @@ export default async function UsersPage() {
                   key={u.id}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:bg-slate-50 hover:border-slate-100 transition-colors"
                 >
-                  <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-700 font-bold text-sm">
+                  <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0 text-spl-blue-dark font-bold text-sm">
                     {(u.full_name ?? u.email).slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -64,7 +63,7 @@ export default async function UsersPage() {
                     <Badge variant="outline" className="text-xs">
                       {ROLE_LABELS[u.role as UserRole]}
                     </Badge>
-                    <Badge className={u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                    <Badge className={u.is_active ? 'bg-spl-success-bg text-spl-success' : 'bg-spl-danger-bg text-spl-danger'}>
                       {u.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                     <EditUserDialog user={u} currentUserId={user.id} />

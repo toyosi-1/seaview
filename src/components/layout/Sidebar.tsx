@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -129,33 +130,33 @@ export function Sidebar({ profile }: SidebarProps) {
         />
       )}
       <aside className={cn(
-        'fixed left-0 top-0 h-full bg-slate-900 text-white flex flex-col z-40 transition-all duration-300',
+        'fixed left-0 top-0 h-full bg-spl-navy text-white flex flex-col z-40 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-5 border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
         {!collapsed && (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center flex-shrink-0 p-1">
+              <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} className="object-contain w-full h-full" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">Sea View Properties</p>
-              <p className="text-xs text-slate-400 truncate">Procurement Portal</p>
+              <p className="text-sm font-bold text-white truncate leading-tight">Seaview Properties</p>
+              <p className="text-[11px] text-blue-200/70 truncate leading-tight">An NPA Subsidiary</p>
             </div>
           </div>
         )}
         {collapsed && (
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center mx-auto">
-            <Building2 className="w-5 h-5 text-white" />
+          <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mx-auto p-1">
+            <Image src="/brand/spl-logo-mark.png" alt="SPL" width={44} height={44} className="object-contain w-full h-full" />
           </div>
         )}
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            'w-7 h-7 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center flex-shrink-0 transition-colors hidden lg:flex',
+            'w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-colors hidden lg:flex',
             collapsed && 'mx-auto mt-2'
           )}
         >
@@ -165,14 +166,14 @@ export function Sidebar({ profile }: SidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(false)}
-          className="w-7 h-7 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center flex-shrink-0 lg:hidden"
+          className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 lg:hidden"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
         {visibleItems.map(item => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -181,19 +182,19 @@ export function Sidebar({ profile }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150 group relative',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group relative',
                 isActive
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-300 hover:bg-slate-700 hover:text-white',
+                  ? 'bg-spl-blue text-white shadow-sm'
+                  : 'text-blue-100/70 hover:bg-white/10 hover:text-white',
                 collapsed && 'justify-center px-2'
               )}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-white')} />
+              <Icon className={cn('w-[18px] h-[18px] flex-shrink-0', isActive ? 'text-white' : 'text-blue-200/60 group-hover:text-white')} />
               {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
               {item.href === '/notifications' && unreadCount > 0 && (
                 <span className={cn(
-                  'bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center min-w-[20px] h-5 px-1',
+                  'bg-spl-danger text-white text-xs font-bold rounded-full flex items-center justify-center min-w-[20px] h-5 px-1',
                   collapsed ? 'absolute -top-1 -right-1 w-5 h-5' : 'ml-auto'
                 )}>
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -204,22 +205,22 @@ export function Sidebar({ profile }: SidebarProps) {
         })}
       </nav>
 
-      <Separator className="bg-slate-700" />
+      <Separator className="bg-white/10" />
 
       {/* User Profile */}
       <div className={cn('p-3', collapsed && 'flex flex-col items-center')}>
         <div className={cn(
-          'flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-800',
+          'flex items-center gap-3 px-2 py-2 rounded-lg bg-white/5',
           collapsed && 'flex-col p-2'
         )}>
           <Avatar className="w-9 h-9 flex-shrink-0">
             <AvatarImage src={profile.avatar_url ?? undefined} />
-            <AvatarFallback className="bg-blue-600 text-white text-sm font-bold">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-spl-blue text-white text-sm font-bold">{initials}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white truncate">{displayName}</p>
-              <p className="text-xs text-slate-400 truncate">{ROLE_LABELS[profile.role]}</p>
+              <p className="text-xs text-blue-200/60 truncate">{ROLE_LABELS[profile.role]}</p>
             </div>
           )}
         </div>
@@ -228,7 +229,7 @@ export function Sidebar({ profile }: SidebarProps) {
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            'mt-2 text-slate-400 hover:text-white hover:bg-slate-700',
+            'mt-2 text-blue-200/60 hover:text-white hover:bg-white/10',
             collapsed ? 'w-full justify-center px-2' : 'w-full justify-start gap-2'
           )}
           title={collapsed ? 'Sign Out' : undefined}
@@ -243,7 +244,7 @@ export function Sidebar({ profile }: SidebarProps) {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-30 lg:hidden w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-lg"
+        className="fixed top-3 left-3 z-30 lg:hidden w-10 h-10 rounded-lg bg-spl-navy text-white flex items-center justify-center shadow-lg"
         aria-label="Open menu"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>

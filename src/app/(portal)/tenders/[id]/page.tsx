@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,11 +11,8 @@ import type { Profile, Tender, TenderStatus } from '@/types/database'
 
 export default async function TenderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -73,8 +70,8 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Briefcase className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-xl bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+              <Briefcase className="w-6 h-6 text-spl-blue" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-800">{tender.title}</h1>
@@ -153,7 +150,7 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
       {/* Action area */}
       <div className="flex gap-4 pb-8">
         {isContractor && status === 'open' && !alreadySubmitted && (
-          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-8 text-base font-semibold">
+          <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-8 text-base font-semibold">
             <Link href={`/proposals/new?tender=${tender.id}`}>
               <Plus className="w-5 h-5 mr-2" />
               Submit Quotation
@@ -161,7 +158,7 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
           </Button>
         )}
         {isContractor && alreadySubmitted && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-green-700 font-medium">
+          <div className="bg-spl-success-bg border border-green-200 rounded-xl px-6 py-4 text-spl-success font-medium">
             You have already submitted a quotation for this contract.
           </div>
         )}

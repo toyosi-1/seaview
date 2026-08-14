@@ -42,7 +42,7 @@ export function DownloadAwardLetter(props: DownloadAwardLetterProps) {
       type="button"
       onClick={handleDownload}
       disabled={loading}
-      className="bg-blue-600 hover:bg-blue-700 text-white h-11 px-5"
+      className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11 px-5"
     >
       {loading ? (
         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>

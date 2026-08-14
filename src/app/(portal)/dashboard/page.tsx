@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { StatCard } from '@/components/dashboard/StatCard'
@@ -22,12 +22,8 @@ import { formatCurrency, formatRelativeTime } from '@/lib/utils/format'
 import type { Profile, Proposal, ProposalStatus, CompletionReport, ContractorStatus, UserRole } from '@/types/database'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
 
   const p = profile as Profile
@@ -128,15 +124,15 @@ export default async function DashboardPage() {
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">
-            {greeting()}, {p.full_name?.split(' ')[0] ?? ROLE_LABELS[p.role as UserRole]} 👋
+          <h1 className="text-3xl font-bold text-spl-navy">
+            {greeting()}, {p.full_name?.split(' ')[0] ?? ROLE_LABELS[p.role as UserRole]}
           </h1>
-          <p className="text-slate-500 text-lg mt-1">
+          <p className="text-spl-text-muted text-lg mt-1">
             {new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         {isContractor && (
-          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-6 text-base font-semibold">
+          <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-6 text-base font-semibold">
             <Link href="/tenders">
               <Briefcase className="w-5 h-5 mr-2" />
               Browse Available Contracts
@@ -153,16 +149,16 @@ export default async function DashboardPage() {
               title="My Quotations"
               value={proposalCount}
               icon={FileText}
-              color="text-blue-600"
-              bgColor="bg-blue-50"
+              color="text-spl-blue"
+              bgColor="bg-spl-blue-light"
               href="/proposals"
             />
             <StatCard
               title="Awarded Contracts"
               value={contractCount}
               icon={Briefcase}
-              color="text-green-600"
-              bgColor="bg-green-50"
+              color="text-spl-success"
+              bgColor="bg-spl-success-bg"
               href="/contracts"
             />
           </>
@@ -172,16 +168,16 @@ export default async function DashboardPage() {
               title="Total Quotations"
               value={proposalCount}
               icon={FileText}
-              color="text-blue-600"
-              bgColor="bg-blue-50"
+              color="text-spl-blue"
+              bgColor="bg-spl-blue-light"
               href="/proposals"
             />
             <StatCard
               title="Pending Approvals"
               value={pendingApprovalCount}
               icon={CheckSquare}
-              color="text-amber-600"
-              bgColor="bg-amber-50"
+              color="text-spl-warning"
+              bgColor="bg-spl-warning-bg"
               href="/proposals?status=pending"
               urgent={pendingApprovalCount > 0}
             />
@@ -189,16 +185,16 @@ export default async function DashboardPage() {
               title="Contracts Awarded"
               value={contractCount}
               icon={Briefcase}
-              color="text-green-600"
-              bgColor="bg-green-50"
+              color="text-spl-success"
+              bgColor="bg-spl-success-bg"
               href="/contracts"
             />
             <StatCard
               title="Projects Awaiting Verification"
               value={completionCount}
               icon={ClipboardList}
-              color="text-purple-600"
-              bgColor="bg-purple-50"
+              color="text-spl-navy"
+              bgColor="bg-spl-panel"
               href="/completions"
               urgent={completionCount > 0}
             />
@@ -206,8 +202,8 @@ export default async function DashboardPage() {
               title="Payments Pending"
               value={paymentPendingCount}
               icon={Banknote}
-              color="text-red-600"
-              bgColor="bg-red-50"
+              color="text-spl-danger"
+              bgColor="bg-spl-danger-bg"
               href="/payments"
               urgent={paymentPendingCount > 0}
             />
@@ -225,10 +221,10 @@ export default async function DashboardPage() {
 
       {/* Project Supervisor: Pending Completion Reviews */}
       {supervisorPending.length > 0 && (
-        <Card className="border-0 shadow-sm border-l-4 border-l-cyan-500">
+        <Card className="border border-spl-border shadow-sm border-l-4 border-l-spl-blue">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-cyan-600" />
+            <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-spl-blue" />
               Completion Reports Awaiting Your Review
             </CardTitle>
           </CardHeader>
@@ -240,8 +236,8 @@ export default async function DashboardPage() {
                   href={`/completions/${cr.id}`}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
-                    <ClipboardList className="w-5 h-5 text-cyan-600" />
+                  <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="w-5 h-5 text-spl-blue" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-800 truncate text-base">{cr.title}</p>
@@ -274,13 +270,13 @@ export default async function DashboardPage() {
             <StatusBreakdown data={proposalStatusData} title="Quotation Status Overview" />
           </div>
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-spl-border shadow-sm">
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
                   <Clock className="w-5 h-5 text-slate-500" />
                   Recent Activity
                 </CardTitle>
-                <Button asChild variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                <Button asChild variant="ghost" size="sm" className="text-spl-blue hover:text-spl-blue-dark">
                   <Link href="/proposals">
                     View All <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
@@ -302,8 +298,8 @@ export default async function DashboardPage() {
                           href={`/proposals/${proposal.id}`}
                           className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                         >
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-spl-blue" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-slate-800 truncate text-base">{proposal.title}</p>
@@ -333,13 +329,13 @@ export default async function DashboardPage() {
 
       {/* Recent Activity (contractor only) */}
       {isContractor && (
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-spl-border shadow-sm">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
               <Clock className="w-5 h-5 text-slate-500" />
               Recent Activity
             </CardTitle>
-            <Button asChild variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+            <Button asChild variant="ghost" size="sm" className="text-spl-blue hover:text-spl-blue-dark">
               <Link href="/proposals">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
@@ -361,8 +357,8 @@ export default async function DashboardPage() {
                       href={`/proposals/${proposal.id}`}
                       className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-spl-blue" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-800 truncate text-base">{proposal.title}</p>

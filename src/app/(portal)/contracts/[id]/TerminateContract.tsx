@@ -94,7 +94,7 @@ export function TerminateContract({ contract, profile }: TerminateContractProps)
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2 text-red-600">
+            <DialogTitle className="text-xl flex items-center gap-2 text-spl-danger">
               <AlertTriangle className="w-5 h-5" />
               Terminate Contract
             </DialogTitle>

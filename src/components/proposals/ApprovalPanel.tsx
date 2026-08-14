@@ -27,23 +27,23 @@ function getTransitions(currentStatus: ProposalStatus, role: string): StageTrans
     case 'md_review':
       if (role !== 'md') return []
       return [
-        { action: 'forward', label: 'Approve & Forward to Procurement', nextStatus: 'procurement_appraisal', nextStage: 'procurement_appraisal', color: 'bg-blue-600 hover:bg-blue-700', icon: ArrowRight },
-        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'md_review', color: 'bg-amber-500 hover:bg-amber-600', icon: RotateCcw },
-        { action: 'reject', label: 'Reject Quotation', nextStatus: 'rejected', nextStage: 'md_review', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+        { action: 'forward', label: 'Approve & Forward to Procurement', nextStatus: 'procurement_appraisal', nextStage: 'procurement_appraisal', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'md_review', color: 'bg-spl-warning hover:bg-spl-warning-dark', icon: RotateCcw },
+        { action: 'reject', label: 'Reject Quotation', nextStatus: 'rejected', nextStage: 'md_review', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
       ]
     case 'procurement_appraisal':
     case 'procurement_review':
       if (role !== 'head_of_procurement') return []
       return [
-        { action: 'forward', label: 'Complete Appraisal & Forward to MD', nextStatus: 'md_final_review', nextStage: 'md_final_review', color: 'bg-blue-600 hover:bg-blue-700', icon: ArrowRight },
-        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'procurement_appraisal', color: 'bg-amber-500 hover:bg-amber-600', icon: RotateCcw },
+        { action: 'forward', label: 'Complete Appraisal & Forward to MD', nextStatus: 'md_final_review', nextStage: 'md_final_review', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'procurement_appraisal', color: 'bg-spl-warning hover:bg-spl-warning-dark', icon: RotateCcw },
       ]
     case 'md_final_review':
       if (role !== 'md') return []
       return [
-        { action: 'approve', label: 'Final Approval - Send to ICT', nextStatus: 'ict_assignment', nextStage: 'ict_assignment', color: 'bg-green-600 hover:bg-green-700', icon: CheckCircle },
-        { action: 'reject', label: 'Reject Quotation', nextStatus: 'rejected', nextStage: 'md_final_review', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
-        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'md_final_review', color: 'bg-amber-500 hover:bg-amber-600', icon: RotateCcw },
+        { action: 'approve', label: 'Final Approval - Send to ICT', nextStatus: 'ict_assignment', nextStage: 'ict_assignment', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+        { action: 'reject', label: 'Reject Quotation', nextStatus: 'rejected', nextStage: 'md_final_review', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
+        { action: 'return', label: 'Return for Clarification', nextStatus: 'returned', nextStage: 'md_final_review', color: 'bg-spl-warning hover:bg-spl-warning-dark', icon: RotateCcw },
       ]
     default:
       return []
@@ -203,8 +203,8 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
 
   return (
     <>
-      <div className="p-5 bg-slate-50 rounded-2xl space-y-4 border border-slate-200">
-        <h3 className="font-bold text-slate-800 text-base">Your Action Required</h3>
+      <div className="p-5 bg-spl-panel rounded-2xl space-y-4 border border-spl-border">
+        <h3 className="font-bold text-spl-navy text-base">Your Action Required</h3>
 
         <div className="space-y-2">
           <Label className="text-sm font-medium text-slate-600">
@@ -249,7 +249,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
               You are about to: <strong>{selectedTransition?.label}</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600">
+          <div className="bg-spl-panel rounded-xl p-4 text-sm text-slate-600 border border-spl-border">
             <strong>Your comment:</strong>
             <p className="mt-1 italic">&ldquo;{comment}&rdquo;</p>
           </div>

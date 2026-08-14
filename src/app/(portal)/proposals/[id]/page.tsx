@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,11 +22,8 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ProposalDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -92,8 +89,8 @@ export default async function ProposalDetailPage({ params }: PageProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <Building2 className="w-4 h-4 text-blue-600" />
+                  <div className="w-9 h-9 rounded-lg bg-spl-blue-light flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-spl-blue" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Contractor</p>
@@ -101,8 +98,8 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-green-600" />
+                  <div className="w-9 h-9 rounded-lg bg-spl-success-bg flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-spl-success" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Estimated Cost</p>
@@ -128,15 +125,15 @@ export default async function ProposalDetailPage({ params }: PageProps) {
               </div>
 
               {prop.rejection_reason && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-100">
-                  <p className="text-sm font-semibold text-red-700 mb-1">Rejection Reason</p>
-                  <p className="text-sm text-red-600">{prop.rejection_reason}</p>
+                <div className="p-4 bg-spl-danger-bg rounded-xl border border-red-100">
+                  <p className="text-sm font-semibold text-spl-danger mb-1">Rejection Reason</p>
+                  <p className="text-sm text-spl-danger">{prop.rejection_reason}</p>
                 </div>
               )}
               {prop.return_reason && (
-                <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-                  <p className="text-sm font-semibold text-amber-700 mb-1">Returned For</p>
-                  <p className="text-sm text-amber-600">{prop.return_reason}</p>
+                <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
+                  <p className="text-sm font-semibold text-spl-warning mb-1">Returned For</p>
+                  <p className="text-sm text-spl-warning">{prop.return_reason}</p>
                 </div>
               )}
             </CardContent>
@@ -158,7 +155,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                       href={doc.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                      className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-spl-blue-light transition-all"
                     >
                       <FileText className="w-7 h-7 text-blue-500 flex-shrink-0" />
                       <div className="min-w-0">
@@ -231,9 +228,9 @@ export default async function ProposalDetailPage({ params }: PageProps) {
 
         {/* Sidebar — Workflow */}
         <div className="space-y-5">
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-spl-border shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-slate-700">Approval Workflow</CardTitle>
+              <CardTitle className="text-lg font-semibold text-spl-navy">Approval Workflow</CardTitle>
             </CardHeader>
             <CardContent>
               <WorkflowTimeline

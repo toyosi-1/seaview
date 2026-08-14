@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,11 +17,8 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ContractorDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -55,8 +52,8 @@ export default async function ContractorDetailPage({ params }: PageProps) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center">
-            <Building2 className="w-8 h-8 text-blue-600" />
+          <div className="w-16 h-16 rounded-2xl bg-spl-blue-light flex items-center justify-center">
+            <Building2 className="w-8 h-8 text-spl-blue" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-800">{c.company_name}</h1>
@@ -118,7 +115,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
                   href={doc.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-spl-blue-light transition-all group"
                 >
                   <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
                   <div className="min-w-0">

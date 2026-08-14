@@ -21,12 +21,12 @@ interface Action {
 
 function getActions(status: InternalProcurementStatus, role: string): Action[] {
   if (status === 'submitted' && role === 'md') return [
-    { label: 'Approve & Forward to Procurement', nextStatus: 'procurement_review', color: 'bg-blue-600 hover:bg-blue-700', icon: ArrowRight },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Approve & Forward to Procurement', nextStatus: 'procurement_review', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'procurement_review' && role === 'head_of_procurement') return [
-    { label: 'Approve Purchase', nextStatus: 'approved', color: 'bg-green-600 hover:bg-green-700', icon: CheckCircle },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Approve Purchase', nextStatus: 'approved', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   return []
 }

@@ -61,7 +61,7 @@ export function CompletionPeriodEditor({ contractId, completionPeriod, editable 
     <div className="flex items-center gap-2">
       <p className="font-semibold text-slate-800 mt-0.5">{completionPeriod || '—'}</p>
       {editable && (
-        <button type="button" onClick={() => setEditing(true)} className="text-slate-400 hover:text-blue-600">
+        <button type="button" onClick={() => setEditing(true)} className="text-slate-400 hover:text-spl-blue">
           <Pencil className="w-3.5 h-3.5" />
         </button>
       )}

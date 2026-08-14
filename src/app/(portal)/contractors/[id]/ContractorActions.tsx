@@ -78,7 +78,7 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
         {contractor.status === 'pending' && (
           <Button
             size="lg"
-            className="bg-green-600 hover:bg-green-700 text-white h-11"
+            className="bg-spl-success hover:bg-spl-success-dark text-white h-11"
             type="button"
             onClick={() => { setAction('active'); setOpen(true) }}
           >
@@ -89,7 +89,7 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
         {contractor.status === 'suspended' && (
           <Button
             size="lg"
-            className="bg-green-600 hover:bg-green-700 text-white h-11"
+            className="bg-spl-success hover:bg-spl-success-dark text-white h-11"
             type="button"
             onClick={() => { setAction('active'); setOpen(true) }}
           >
@@ -133,7 +133,7 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
               type="button"
               onClick={handleAction}
               disabled={loading}
-              className={`flex-1 h-11 text-white ${action === 'active' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+              className={`flex-1 h-11 text-white ${action === 'active' ? 'bg-spl-success hover:bg-spl-success-dark' : 'bg-spl-danger hover:bg-spl-danger-dark'}`}
             >
               {loading ? 'Processing...' : 'Confirm'}
             </Button>

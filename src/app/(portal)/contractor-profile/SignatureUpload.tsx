@@ -101,7 +101,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
     <div className="space-y-4">
       {profile.signature_url ? (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 text-spl-success">
             <CheckCircle className="w-5 h-5" />
             <p className="text-sm font-medium">Signature on file</p>
           </div>
@@ -115,9 +115,9 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
           <p className="text-xs text-slate-500">Draw or upload a new signature below to replace your current one.</p>
         </div>
       ) : (
-        <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-          <p className="text-sm text-amber-700 font-medium">No signature on file yet.</p>
-          <p className="text-xs text-amber-600 mt-1">
+        <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
+          <p className="text-sm text-spl-warning font-medium">No signature on file yet.</p>
+          <p className="text-xs text-spl-warning mt-1">
             For executive staff: your signature will be applied to award letters and approval documents.
           </p>
         </div>
@@ -141,7 +141,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
             type="button"
             onClick={handleSaveDrawn}
             disabled={padEmpty || loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white h-11 px-6"
+            className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11 px-6"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
@@ -167,15 +167,15 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
           )}
 
           {processing && (
-            <div className="flex flex-col items-center justify-center gap-2 p-10 border-2 border-dashed border-blue-200 rounded-xl bg-blue-50/50">
+            <div className="flex flex-col items-center justify-center gap-2 p-10 border-2 border-dashed border-blue-200 rounded-xl bg-spl-blue-light/50">
               <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-              <p className="text-sm text-blue-600 font-medium">Removing background & cleaning up signature...</p>
+              <p className="text-sm text-spl-blue font-medium">Removing background & cleaning up signature...</p>
             </div>
           )}
 
           {previewUrl && !processing && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-blue-600">
+              <div className="flex items-center gap-2 text-spl-blue">
                 <Sparkles className="w-4 h-4" />
                 <p className="text-sm font-medium">Background removed — preview below</p>
               </div>
@@ -195,7 +195,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
                   type="button"
                   onClick={handleUploadFile}
                   disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white h-11 px-6"
+                  className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11 px-6"
                 >
                   {loading ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>

@@ -225,7 +225,7 @@ function NewProposalContent() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-blue-600" />
+              <Briefcase className="w-5 h-5 text-spl-blue" />
               Select Contract *
             </CardTitle>
             <CardDescription>Choose the contract you want to submit a quotation for</CardDescription>
@@ -235,7 +235,7 @@ function NewProposalContent() {
               <div className="text-center py-8 text-slate-400">
                 <Briefcase className="w-10 h-10 mx-auto mb-2 opacity-30" />
                 <p className="font-medium">No open contracts available</p>
-                <Button asChild className="mt-3 bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+                <Button asChild className="mt-3 bg-spl-blue hover:bg-spl-blue-dark text-white" size="sm">
                   <Link href="/tenders">Browse Contracts</Link>
                 </Button>
               </div>
@@ -245,7 +245,7 @@ function NewProposalContent() {
                   <label
                     key={tender.id}
                     className={`flex items-start gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedTenderId === tender.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'
+                      selectedTenderId === tender.id ? 'border-spl-blue bg-spl-blue-light' : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
                     <input
@@ -335,7 +335,7 @@ function NewProposalContent() {
                   className="h-10 cursor-pointer max-w-xs mx-auto"
                 />
                 {proposalDoc && (
-                  <p className="text-sm text-green-600 font-medium mt-2">✓ {proposalDoc.name}</p>
+                  <p className="text-sm text-spl-success font-medium mt-2">✓ {proposalDoc.name}</p>
                 )}
               </div>
             </div>
@@ -353,7 +353,7 @@ function NewProposalContent() {
                   className="h-10 cursor-pointer max-w-xs mx-auto"
                 />
                 {supportingDocs && supportingDocs.length > 0 && (
-                  <p className="text-sm text-green-600 font-medium mt-2">
+                  <p className="text-sm text-spl-success font-medium mt-2">
                     ✓ {supportingDocs.length} file{supportingDocs.length > 1 ? 's' : ''} selected
                   </p>
                 )}
@@ -372,7 +372,7 @@ function NewProposalContent() {
             type="submit"
             disabled={loading || !selectedTenderId || !title || !description || !estimatedCost}
             size="lg"
-            className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white"
           >
             {loading ? (
               <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Submitting...</>

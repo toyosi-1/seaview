@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,11 +15,8 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function PaymentDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -68,11 +65,11 @@ export default async function PaymentDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Tax Deduction</p>
-                  <p className="font-semibold text-red-600 text-lg mt-0.5">-{formatCurrency(pay.tax_deduction)}</p>
+                  <p className="font-semibold text-spl-danger text-lg mt-0.5">-{formatCurrency(pay.tax_deduction)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Net Payment</p>
-                  <p className="font-bold text-green-700 text-2xl mt-0.5">{formatCurrency(pay.net_amount ?? pay.amount)}</p>
+                  <p className="font-bold text-spl-success text-2xl mt-0.5">{formatCurrency(pay.net_amount ?? pay.amount)}</p>
                 </div>
                 {pay.payment_reference && (
                   <div>
@@ -121,7 +118,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {(docs as PaymentDocument[]).map(doc => (
                     <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-green-300 hover:bg-green-50 transition-all">
+                      className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-green-300 hover:bg-spl-success-bg transition-all">
                       <FileText className="w-7 h-7 text-green-500 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-700 capitalize truncate">{doc.document_type.replace(/_/g, ' ')}</p>

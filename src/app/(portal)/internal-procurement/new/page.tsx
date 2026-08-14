@@ -133,7 +133,7 @@ export default function NewInternalProcurementPage() {
           <Button asChild variant="outline" size="lg" className="flex-1 h-12 text-base">
             <Link href="/internal-procurement">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={loading || !department || !itemDescription || !estimatedCost || !reason} size="lg" className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white">
+          <Button type="submit" disabled={loading || !department || !itemDescription || !estimatedCost || !reason} size="lg" className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white">
             {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Submitting...</> : <><ShoppingCart className="w-5 h-5 mr-2" />Submit Request</>}
           </Button>
         </div>

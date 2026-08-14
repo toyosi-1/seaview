@@ -109,7 +109,7 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
       <div className="p-5 bg-slate-50 rounded-2xl space-y-4 border border-slate-200">
         <h3 className="font-bold text-slate-800 text-base">Payment Actions</h3>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => setAction('approve')} size="lg" className="bg-green-600 hover:bg-green-700 text-white h-11">
+          <Button type="button" onClick={() => setAction('approve')} size="lg" className="bg-spl-success hover:bg-spl-success-dark text-white h-11">
             <CheckCircle className="w-4 h-4 mr-2" />Approve & Process Payment
           </Button>
           <Button type="button" onClick={() => setAction('hold')} size="lg" className="bg-orange-500 hover:bg-orange-600 text-white h-11">
@@ -155,7 +155,7 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
                 type="button"
                 onClick={handleAction}
                 disabled={loading || !notes.trim() || (action === 'approve' && !reference.trim())}
-                className={`flex-1 h-11 text-white ${action === 'approve' ? 'bg-green-600 hover:bg-green-700' : action === 'hold' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-600 hover:bg-red-700'}`}
+                className={`flex-1 h-11 text-white ${action === 'approve' ? 'bg-spl-success hover:bg-spl-success-dark' : action === 'hold' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-spl-danger hover:bg-spl-danger-dark'}`}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
                 {loading ? 'Processing...' : 'Confirm'}

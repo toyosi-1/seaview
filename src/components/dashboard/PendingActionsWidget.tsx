@@ -48,7 +48,7 @@ export function PendingActionsWidget({ actions }: { actions: PendingAction[] }) 
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-800 text-sm">{action.label}</p>
               </div>
-              <Badge className={action.urgent ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}>
+              <Badge className={action.urgent ? 'bg-spl-danger-bg text-spl-danger' : 'bg-spl-warning-bg text-spl-warning'}>
                 {action.count} pending
               </Badge>
               <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />

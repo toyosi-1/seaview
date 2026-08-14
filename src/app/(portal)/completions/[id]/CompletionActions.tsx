@@ -21,20 +21,20 @@ interface Action {
 
 function getActions(status: CompletionStatus, role: string, isSupervisor: boolean): Action[] {
   if ((status === 'submitted' || status === 'supervisor_review') && isSupervisor) return [
-    { label: 'Approve & Forward to MD', nextStatus: 'md_verification', color: 'bg-blue-600 hover:bg-blue-700', icon: ArrowRight },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Approve & Forward to MD', nextStatus: 'md_verification', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'md_verification' && role === 'md') return [
-    { label: 'Verify & Forward to Audit', nextStatus: 'audit_review', color: 'bg-blue-600 hover:bg-blue-700', icon: ArrowRight },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Verify & Forward to Audit', nextStatus: 'audit_review', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'audit_review' && role === 'head_of_audit') return [
-    { label: 'Approve & Forward to Accounts', nextStatus: 'accounts_review', color: 'bg-green-600 hover:bg-green-700', icon: CheckCircle },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Approve & Forward to Accounts', nextStatus: 'accounts_review', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'accounts_review' && role === 'head_of_accounts') return [
-    { label: 'Approve for Payment', nextStatus: 'payment_pending', color: 'bg-green-600 hover:bg-green-700', icon: CheckCircle },
-    { label: 'Reject', nextStatus: 'rejected', color: 'bg-red-600 hover:bg-red-700', icon: XCircle },
+    { label: 'Approve for Payment', nextStatus: 'payment_pending', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   return []
 }

@@ -219,7 +219,7 @@ export function AppraisalDocuments({ proposalId }: AppraisalDocumentsProps) {
                     href={signedUrls[doc.id]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-xs text-spl-blue hover:text-spl-blue-dark font-medium"
                   >
                     View
                   </a>

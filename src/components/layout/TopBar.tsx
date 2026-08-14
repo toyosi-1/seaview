@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -79,10 +80,10 @@ export function TopBar({ profile }: { profile: Profile }) {
   }, [query])
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-14 lg:pl-6">
+    <header className="h-16 bg-white border-b border-spl-border flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-14 lg:pl-6">
       {/* Home button */}
-      <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors flex-shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-blue-50 flex items-center justify-center transition-colors">
+      <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-spl-blue transition-colors flex-shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-spl-blue-light flex items-center justify-center transition-colors">
           <Home className="w-5 h-5" />
         </div>
       </Link>
@@ -128,6 +129,15 @@ export function TopBar({ profile }: { profile: Profile }) {
         )}
       </div>
 
+      {/* NPA institutional mark */}
+      <div className="hidden sm:flex items-center gap-2.5 flex-shrink-0 pr-3 border-r border-spl-border">
+        <Image src="/brand/npa-logo-mark.png" alt="Nigerian Ports Authority" width={40} height={40} className="object-contain w-10 h-10" />
+        <div className="hidden xl:block leading-tight">
+          <p className="text-[10px] text-spl-text-muted">Parent Organization</p>
+          <p className="text-xs font-semibold text-spl-navy">Nigerian Ports Authority</p>
+        </div>
+      </div>
+
       {/* Notifications */}
       <div className="relative" ref={notifRef}>
         <Button
@@ -139,7 +149,7 @@ export function TopBar({ profile }: { profile: Profile }) {
         >
           <Bell className="w-5 h-5 text-slate-600" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-spl-danger text-white text-xs font-bold rounded-full flex items-center justify-center">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -149,13 +159,13 @@ export function TopBar({ profile }: { profile: Profile }) {
           <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-[480px] overflow-y-auto">
             <div className="sticky top-0 bg-white px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800">Notifications</h3>
-              <Link href="/notifications" className="text-xs text-blue-600 hover:text-blue-800">View all</Link>
+              <Link href="/notifications" className="text-xs text-spl-blue hover:text-spl-blue-dark">View all</Link>
             </div>
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-slate-500 text-sm">No notifications yet</div>
             ) : (
               notifications.slice(0, 10).map(n => (
-                <div key={n.id} className={`px-4 py-3 border-b border-slate-50 last:border-0 ${!n.is_read ? 'bg-blue-50/50' : ''}`}>
+                <div key={n.id} className={`px-4 py-3 border-b border-slate-50 last:border-0 ${!n.is_read ? 'bg-spl-blue-light/50' : ''}`}>
                   <p className="text-sm font-medium text-slate-800">{n.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
                   <p className="text-xs text-slate-400 mt-1">{formatRelativeTime(n.created_at)}</p>

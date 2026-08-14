@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,11 +17,8 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ContractDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -43,8 +40,8 @@ export default async function ContractDetailPage({ params }: PageProps) {
 
   const INTERNAL_EDIT_ROLES: UserRole[] = ['md', 'head_of_procurement', 'ict_admin']
 
-  const statusColor = c.status === 'active' ? 'bg-green-100 text-green-800' :
-    c.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+  const statusColor = c.status === 'active' ? 'bg-spl-success-bg text-spl-success' :
+    c.status === 'completed' ? 'bg-spl-blue-light text-spl-blue-dark' : 'bg-spl-danger-bg text-spl-danger'
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -77,7 +74,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Contract Value</p>
-                  <p className="font-bold text-green-700 text-2xl mt-0.5">{formatCurrency(c.contract_value)}</p>
+                  <p className="font-bold text-spl-success text-2xl mt-0.5">{formatCurrency(c.contract_value)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Awarded</p>
@@ -103,7 +100,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
                   <div>
                     <p className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">Quotation Description</p>
                     <p className="text-slate-700 text-base leading-relaxed">{c.proposals.description}</p>
-                    <Link href={`/proposals`} className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                    <Link href={`/proposals`} className="text-sm text-spl-blue hover:underline mt-2 inline-block">
                       View Quotation {c.proposals.proposal_number}
                     </Link>
                   </div>
@@ -148,11 +145,11 @@ export default async function ContractDetailPage({ params }: PageProps) {
               ) : (
                 <>
                   <Separator />
-                  <div className="flex items-center gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-amber-200 bg-spl-warning-bg">
                     <FileText className="w-7 h-7 text-amber-500" />
                     <div>
-                      <p className="font-semibold text-amber-700">Award Letter Pending</p>
-                      <p className="text-xs text-amber-600">Available once ICT assigns a responsible department</p>
+                      <p className="font-semibold text-spl-warning">Award Letter Pending</p>
+                      <p className="text-xs text-spl-warning">Available once ICT assigns a responsible department</p>
                     </div>
                   </div>
                 </>
@@ -162,13 +159,13 @@ export default async function ContractDetailPage({ params }: PageProps) {
 
           {/* Project Completion CTA for contractors */}
           {p.role === 'contractor' && c.status === 'active' && (
-            <Card className="border-0 shadow-sm bg-blue-50 border-blue-100">
+            <Card className="border-0 shadow-sm bg-spl-blue-light border-blue-100">
               <CardContent className="p-5">
-                <h3 className="font-bold text-blue-800 text-lg">Ready to submit project completion?</h3>
-                <p className="text-blue-600 text-sm mt-1 mb-4">
+                <h3 className="font-bold text-spl-blue-dark text-lg">Ready to submit project completion?</h3>
+                <p className="text-spl-blue text-sm mt-1 mb-4">
                   Once your project is complete, submit your completion report and evidence for verification.
                 </p>
-                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white h-11">
+                <Button asChild className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11">
                   <Link href={`/completions/new?contract_id=${c.id}`}>
                     Submit Completion Report
                   </Link>

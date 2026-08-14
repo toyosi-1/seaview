@@ -50,7 +50,7 @@ export function UserManagementClient() {
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-6 text-base font-semibold">
+      <Button type="button" onClick={() => setOpen(true)} size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-6 text-base font-semibold">
         <UserPlus className="w-5 h-5 mr-2" />
         Create User
       </Button>
@@ -91,7 +91,7 @@ export function UserManagementClient() {
                 type="button"
                 onClick={handleCreate}
                 disabled={loading || !email || !tempPassword}
-                className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 h-11 bg-spl-blue hover:bg-spl-blue-dark text-white"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <UserPlus className="w-5 h-5 mr-2" />}
                 {loading ? 'Creating...' : 'Create User'}

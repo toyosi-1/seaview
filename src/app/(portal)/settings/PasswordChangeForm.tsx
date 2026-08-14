@@ -49,7 +49,7 @@ export function PasswordChangeForm() {
   return (
     <>
       {done && (
-        <div className="mb-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm font-medium">
+        <div className="mb-4 flex items-center gap-2 bg-spl-success-bg border border-green-200 text-spl-success rounded-lg px-4 py-3 text-sm font-medium">
           <Check className="w-4 h-4" /> Password changed successfully
         </div>
       )}
@@ -91,7 +91,7 @@ export function PasswordChangeForm() {
         <Button
           type="submit"
           disabled={loading || !current || !newPass || !confirm}
-          className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+          className="w-full h-11 bg-spl-blue hover:bg-spl-blue-dark text-white font-semibold"
         >
           {loading
             ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Updating...</>

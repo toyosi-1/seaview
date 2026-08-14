@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,11 +15,8 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function InternalProcurementDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -57,8 +54,8 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-green-600" />
+                  <div className="w-9 h-9 rounded-lg bg-spl-success-bg flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-spl-success" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Estimated Cost</p>
@@ -85,9 +82,9 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
                 <p className="text-slate-700 text-base leading-relaxed">{req.reason}</p>
               </div>
               {req.rejection_reason && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-100">
-                  <p className="text-sm font-semibold text-red-700 mb-1">Rejection Reason</p>
-                  <p className="text-sm text-red-600">{req.rejection_reason}</p>
+                <div className="p-4 bg-spl-danger-bg rounded-xl border border-red-100">
+                  <p className="text-sm font-semibold text-spl-danger mb-1">Rejection Reason</p>
+                  <p className="text-sm text-spl-danger">{req.rejection_reason}</p>
                 </div>
               )}
             </CardContent>

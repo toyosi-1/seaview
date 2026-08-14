@@ -63,7 +63,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       <Button
         type="submit"
         disabled={loading}
-        className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+        className="w-full h-11 bg-spl-blue hover:bg-spl-blue-dark text-white font-semibold"
       >
         {loading
           ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</>

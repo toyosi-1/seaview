@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, Loader2, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { BrandPanel } from '@/components/auth/BrandPanel'
 
 const STEPS = ['Account', 'Company', 'Banking']
 
@@ -95,34 +97,41 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
-            <Building2 className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex bg-white">
+      <BrandPanel />
+
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+        {/* Compact mobile brand header */}
+        <div className="lg:hidden text-center mb-6 mt-4">
+          <div className="w-20 h-20 rounded-full bg-white shadow-lg ring-1 ring-spl-border flex items-center justify-center p-2.5 mx-auto">
+            <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={72} height={72} className="object-contain w-full h-full" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Contractor Registration</h1>
-          <p className="text-slate-400 text-sm">Sea View Properties Procurement Portal</p>
+          <p className="mt-3 text-sm text-spl-text-muted">Seaview Properties Limited Procurement Portal</p>
         </div>
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-2">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
-                ${i < step ? 'bg-green-500 text-white' : i === step ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
+        <div className="w-full max-w-lg space-y-6">
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-bold text-spl-navy">Contractor Registration</h1>
+            <p className="text-spl-text-muted text-sm">Register your company to bid on SPL contracts</p>
+          </div>
+
+          {/* Step Indicator */}
+          <div className="flex items-center justify-center gap-2">
+            {STEPS.map((s, i) => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                  ${i < step ? 'bg-spl-success text-white' : i === step ? 'bg-spl-blue text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={`text-xs hidden sm:block ${i === step ? 'text-spl-navy font-medium' : 'text-slate-400'}`}>{s}</span>
+                {i < STEPS.length - 1 && <div className={`w-8 h-0.5 ${i < step ? 'bg-spl-success' : 'bg-slate-200'}`} />}
               </div>
-              <span className={`text-xs hidden sm:block ${i === step ? 'text-white font-medium' : 'text-slate-400'}`}>{s}</span>
-              {i < STEPS.length - 1 && <div className={`w-8 h-0.5 ${i < step ? 'bg-green-500' : 'bg-slate-700'}`} />}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur">
+        <Card className="border border-spl-border shadow-lg bg-white">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-slate-800">
+            <CardTitle className="text-xl font-bold text-spl-navy">
               Step {step + 1}: {STEPS[step]}
             </CardTitle>
             <CardDescription>
@@ -191,7 +200,7 @@ export default function RegisterPage() {
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="flex-1 h-11 bg-spl-blue hover:bg-spl-blue-dark text-white"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -201,7 +210,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white"
+                  className="flex-1 h-11 bg-spl-success hover:bg-green-700 text-white"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />}
                   {loading ? 'Submitting...' : 'Complete Registration'}
@@ -211,10 +220,11 @@ export default function RegisterPage() {
 
             <p className="text-center text-sm text-slate-500">
               Already registered?{' '}
-              <a href="/login" className="text-blue-600 hover:text-blue-800 font-medium">Sign in</a>
+              <a href="/login" className="text-spl-blue hover:text-spl-blue-dark font-medium">Sign in</a>
             </p>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )

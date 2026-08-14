@@ -165,7 +165,7 @@ export default function NewCompletionPage() {
                 <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors">
                   <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                   <Input type="file" accept={accept} onChange={e => setter(e.target.files?.[0] ?? null)} className="h-10 cursor-pointer max-w-xs mx-auto" />
-                  {state && <p className="text-sm text-green-600 font-medium mt-2">✓ {state.name}</p>}
+                  {state && <p className="text-sm text-spl-success font-medium mt-2">✓ {state.name}</p>}
                 </div>
               </div>
             ))}
@@ -175,7 +175,7 @@ export default function NewCompletionPage() {
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors">
                 <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                 <Input type="file" accept=".png,.jpg,.jpeg,.webp" multiple onChange={e => setImages(e.target.files)} className="h-10 cursor-pointer max-w-xs mx-auto" />
-                {images && images.length > 0 && <p className="text-sm text-green-600 font-medium mt-2">✓ {images.length} image{images.length > 1 ? 's' : ''} selected</p>}
+                {images && images.length > 0 && <p className="text-sm text-spl-success font-medium mt-2">✓ {images.length} image{images.length > 1 ? 's' : ''} selected</p>}
               </div>
             </div>
 
@@ -184,7 +184,7 @@ export default function NewCompletionPage() {
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors">
                 <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
                 <Input type="file" multiple onChange={e => setSupporting(e.target.files)} className="h-10 cursor-pointer max-w-xs mx-auto" />
-                {supporting && supporting.length > 0 && <p className="text-sm text-green-600 font-medium mt-2">✓ {supporting.length} file{supporting.length > 1 ? 's' : ''} selected</p>}
+                {supporting && supporting.length > 0 && <p className="text-sm text-spl-success font-medium mt-2">✓ {supporting.length} file{supporting.length > 1 ? 's' : ''} selected</p>}
               </div>
             </div>
           </CardContent>
@@ -194,7 +194,7 @@ export default function NewCompletionPage() {
           <Button asChild variant="outline" size="lg" className="flex-1 h-12 text-base">
             <Link href="/completions">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={loading || !title || !description || !completionReport || !certificate} size="lg" className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white">
+          <Button type="submit" disabled={loading || !title || !description || !completionReport || !certificate} size="lg" className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white">
             {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Submitting...</> : <><ClipboardList className="w-5 h-5 mr-2" />Submit Report</>}
           </Button>
         </div>

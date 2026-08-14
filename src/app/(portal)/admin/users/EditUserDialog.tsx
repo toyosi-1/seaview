@@ -59,7 +59,7 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-slate-500 hover:text-blue-600 h-9 px-3"
+        className="text-slate-500 hover:text-spl-blue h-9 px-3"
         type="button"
         onClick={() => setOpen(true)}
       >
@@ -71,7 +71,7 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <UserCog className="w-5 h-5 text-blue-600" />
+              <UserCog className="w-5 h-5 text-spl-blue" />
               Edit User
             </DialogTitle>
             <DialogDescription>Update user details, role, or account status.</DialogDescription>
@@ -123,7 +123,7 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
                 type="button"
                 onClick={handleSave}
                 disabled={loading || !email}
-                className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 h-11 bg-spl-blue hover:bg-spl-blue-dark text-white"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <UserCog className="w-5 h-5 mr-2" />}
                 {loading ? 'Saving...' : 'Save Changes'}

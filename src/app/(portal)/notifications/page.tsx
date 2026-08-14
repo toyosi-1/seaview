@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -7,18 +7,17 @@ import { formatRelativeTime } from '@/lib/utils/format'
 import type { Notification } from '@/types/database'
 
 const TYPE_COLORS: Record<string, string> = {
-  proposal_submitted: 'bg-blue-100 text-blue-800',
-  proposal_approved: 'bg-green-100 text-green-800',
-  proposal_rejected: 'bg-red-100 text-red-800',
-  proposal_returned: 'bg-amber-100 text-amber-800',
+  proposal_submitted: 'bg-spl-blue-light text-spl-blue-dark',
+  proposal_approved: 'bg-spl-success-bg text-spl-success',
+  proposal_rejected: 'bg-spl-danger-bg text-spl-danger',
+  proposal_returned: 'bg-spl-warning-bg text-spl-warning',
   contract_awarded: 'bg-purple-100 text-purple-800',
   payment_completed: 'bg-emerald-100 text-emerald-800',
   default: 'bg-slate-100 text-slate-800',
 }
 
 export default async function NotificationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
   const { data: notifications } = await supabase
@@ -60,7 +59,7 @@ export default async function NotificationsPage() {
                   key={n.id}
                   className="flex items-start gap-4 px-5 py-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
                 >
-                  <div className={`w-2 h-2 rounded-full mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                  <div className={`w-2 h-2 rounded-full mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-spl-blue-light0' : 'bg-transparent'}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-800 text-base">{n.title}</p>

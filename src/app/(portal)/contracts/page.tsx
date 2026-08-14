@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,11 +8,8 @@ import { formatCurrency, formatDate } from '@/lib/utils/format'
 import type { Profile, Contract } from '@/types/database'
 
 export default async function ContractsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -38,9 +35,9 @@ export default async function ContractsPage() {
   }
 
   const statusColor = (s: string) =>
-    s === 'active' ? 'bg-green-100 text-green-800' :
-    s === 'completed' ? 'bg-blue-100 text-blue-800' :
-    'bg-red-100 text-red-800'
+    s === 'active' ? 'bg-spl-success-bg text-spl-success' :
+    s === 'completed' ? 'bg-spl-blue-light text-spl-blue-dark' :
+    'bg-spl-danger-bg text-spl-danger'
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -69,8 +66,8 @@ export default async function ContractsPage() {
                     href={`/contracts/${c.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Briefcase className="w-5 h-5 text-green-600" />
+                    <div className="w-11 h-11 rounded-full bg-spl-success-bg flex items-center justify-center flex-shrink-0">
+                      <Briefcase className="w-5 h-5 text-spl-success" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-base truncate">{c.title}</p>

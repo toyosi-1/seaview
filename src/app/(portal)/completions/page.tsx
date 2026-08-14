@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,22 +9,19 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, CompletionReport, CompletionStatus } from '@/types/database'
 
 const STATUS_COLORS: Record<CompletionStatus, string> = {
-  submitted: 'bg-blue-100 text-blue-800',
+  submitted: 'bg-spl-blue-light text-spl-blue-dark',
   supervisor_review: 'bg-cyan-100 text-cyan-800',
   md_verification: 'bg-yellow-100 text-yellow-800',
   audit_review: 'bg-purple-100 text-purple-800',
   accounts_review: 'bg-orange-100 text-orange-800',
   payment_pending: 'bg-indigo-100 text-indigo-800',
-  payment_completed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  payment_completed: 'bg-spl-success-bg text-spl-success',
+  rejected: 'bg-spl-danger-bg text-spl-danger',
 }
 
 export default async function CompletionsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
   const p = profile as Profile
 

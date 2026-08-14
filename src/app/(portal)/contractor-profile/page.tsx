@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,8 +12,7 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, Contractor, ContractorDocument, ContractorStatus } from '@/types/database'
 
 export default async function ContractorProfilePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -28,7 +27,7 @@ export default async function ContractorProfilePage() {
         <Building2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-slate-700 mb-2">No Profile Found</h2>
         <p className="text-slate-500 mb-6">Complete your contractor registration to access the portal.</p>
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-8">
+        <Button asChild className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-8">
           <Link href="/register">Complete Registration</Link>
         </Button>
       </div>
@@ -55,8 +54,8 @@ export default async function ContractorProfilePage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center">
-            <Building2 className="w-8 h-8 text-blue-600" />
+          <div className="w-16 h-16 rounded-2xl bg-spl-blue-light flex items-center justify-center">
+            <Building2 className="w-8 h-8 text-spl-blue" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-800">{c.company_name}</h1>
@@ -71,8 +70,8 @@ export default async function ContractorProfilePage() {
       </div>
 
       {c.status === 'pending' && (
-        <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-          <p className="text-amber-800 font-medium">
+        <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-200">
+          <p className="text-spl-warning font-medium">
             ⏳ Your account is pending verification. You will be notified once it has been reviewed by our team.
           </p>
         </div>
@@ -103,7 +102,7 @@ export default async function ContractorProfilePage() {
             {infoItem(<Building2 className="w-4 h-4 text-slate-500" />, 'Account Name', c.account_name)}
             <Separator />
             <p className="text-xs text-slate-500">
-              You can update your company and banking details in <Link href="/settings" className="text-blue-600 hover:underline">Account Settings</Link>.
+              You can update your company and banking details in <Link href="/settings" className="text-spl-blue hover:underline">Account Settings</Link>.
             </p>
           </CardContent>
         </Card>
@@ -125,7 +124,7 @@ export default async function ContractorProfilePage() {
                   href={doc.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-spl-blue-light transition-all group"
                 >
                   <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
                   <div className="min-w-0">

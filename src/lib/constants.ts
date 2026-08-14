@@ -59,17 +59,17 @@ export const PROPOSAL_STATUS_LABELS: Record<ProposalStatus, string> = {
 }
 
 export const PROPOSAL_STATUS_COLORS: Record<ProposalStatus, string> = {
-  submitted: 'bg-blue-100 text-blue-800',
-  md_review: 'bg-yellow-100 text-yellow-800',
-  procurement_appraisal: 'bg-orange-100 text-orange-800',
-  md_final_review: 'bg-indigo-100 text-indigo-800',
-  ict_assignment: 'bg-cyan-100 text-cyan-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  returned: 'bg-gray-100 text-gray-800',
+  submitted: 'bg-spl-info-bg text-spl-info',
+  md_review: 'bg-spl-warning-bg text-spl-warning',
+  procurement_appraisal: 'bg-spl-warning-bg text-spl-warning',
+  md_final_review: 'bg-spl-info-bg text-spl-info',
+  ict_assignment: 'bg-spl-info-bg text-spl-info',
+  approved: 'bg-spl-success-bg text-spl-success',
+  rejected: 'bg-spl-danger-bg text-spl-danger',
+  returned: 'bg-slate-100 text-slate-600',
   // legacy
-  procurement_review: 'bg-orange-100 text-orange-800',
-  head_procurement_review: 'bg-purple-100 text-purple-800',
+  procurement_review: 'bg-spl-warning-bg text-spl-warning',
+  head_procurement_review: 'bg-spl-warning-bg text-spl-warning',
 }
 
 // Simplified statuses shown to contractors (internal stages hidden per business rules)
@@ -91,9 +91,9 @@ export const CONTRACTOR_STATUS_LABELS: Record<ContractorStatus, string> = {
 }
 
 export const CONTRACTOR_STATUS_COLORS: Record<ContractorStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  active: 'bg-green-100 text-green-800',
-  suspended: 'bg-red-100 text-red-800',
+  pending: 'bg-spl-warning-bg text-spl-warning',
+  active: 'bg-spl-success-bg text-spl-success',
+  suspended: 'bg-spl-danger-bg text-spl-danger',
 }
 
 export const COMPLETION_STATUS_LABELS: Record<CompletionStatus, string> = {
@@ -128,11 +128,11 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 }
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-blue-100 text-blue-800',
-  rejected: 'bg-red-100 text-red-800',
-  on_hold: 'bg-orange-100 text-orange-800',
-  completed: 'bg-green-100 text-green-800',
+  pending: 'bg-spl-warning-bg text-spl-warning',
+  approved: 'bg-spl-info-bg text-spl-info',
+  rejected: 'bg-spl-danger-bg text-spl-danger',
+  on_hold: 'bg-spl-warning-bg text-spl-warning',
+  completed: 'bg-spl-success-bg text-spl-success',
 }
 
 export const INTERNAL_PROCUREMENT_STATUS_LABELS: Record<InternalProcurementStatus, string> = {
@@ -144,11 +144,11 @@ export const INTERNAL_PROCUREMENT_STATUS_LABELS: Record<InternalProcurementStatu
 }
 
 export const INTERNAL_PROCUREMENT_STATUS_COLORS: Record<InternalProcurementStatus, string> = {
-  submitted: 'bg-blue-100 text-blue-800',
-  md_review: 'bg-yellow-100 text-yellow-800',
-  procurement_review: 'bg-orange-100 text-orange-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  submitted: 'bg-spl-info-bg text-spl-info',
+  md_review: 'bg-spl-warning-bg text-spl-warning',
+  procurement_review: 'bg-spl-warning-bg text-spl-warning',
+  approved: 'bg-spl-success-bg text-spl-success',
+  rejected: 'bg-spl-danger-bg text-spl-danger',
 }
 
 export const TENDER_STATUS_LABELS: Record<TenderStatus, string> = {
@@ -159,10 +159,10 @@ export const TENDER_STATUS_LABELS: Record<TenderStatus, string> = {
 }
 
 export const TENDER_STATUS_COLORS: Record<TenderStatus, string> = {
-  open: 'bg-green-100 text-green-800',
-  closed: 'bg-yellow-100 text-yellow-800',
-  awarded: 'bg-blue-100 text-blue-800',
-  cancelled: 'bg-red-100 text-red-800',
+  open: 'bg-spl-success-bg text-spl-success',
+  closed: 'bg-spl-warning-bg text-spl-warning',
+  awarded: 'bg-spl-info-bg text-spl-info',
+  cancelled: 'bg-spl-danger-bg text-spl-danger',
 }
 
 export const WORKFLOW_STAGES = [
