@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -14,7 +13,7 @@ import { BrandPanel } from '@/components/auth/BrandPanel'
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-spl-navy" />}>
+    <Suspense fallback={<div className="min-h-screen bg-spl-blue" />}>
       <LoginContent />
     </Suspense>
   )
@@ -49,24 +48,11 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <BrandPanel />
 
       {/* Form panel */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative">
-        {/* Compact mobile brand header (shown when the side panel is hidden) */}
-        <div className="lg:hidden text-center mb-8 mt-4">
-          <div className="w-20 h-20 rounded-full bg-white shadow-lg ring-1 ring-spl-border flex items-center justify-center p-2.5 mx-auto">
-            <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={72} height={72} className="object-contain w-full h-full" priority />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold text-spl-navy tracking-tight">Seaview Properties Limited</h1>
-          <p className="text-spl-text-muted text-sm mt-0.5">Procurement & Contractor Portal</p>
-          <div className="flex items-center justify-center gap-2 mt-3">
-            <Image src="/brand/npa-logo-mark.png" alt="Nigerian Ports Authority" width={22} height={22} className="object-contain w-[22px] h-[22px]" />
-            <p className="text-slate-400 text-xs">A subsidiary of the Nigerian Ports Authority</p>
-          </div>
-        </div>
-
         <div className="w-full max-w-md space-y-6">
           <div className="hidden lg:block space-y-1">
             <h2 className="text-3xl font-bold text-spl-navy">Sign In</h2>

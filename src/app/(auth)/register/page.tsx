@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -97,18 +96,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <BrandPanel />
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
-        {/* Compact mobile brand header */}
-        <div className="lg:hidden text-center mb-6 mt-4">
-          <div className="w-20 h-20 rounded-full bg-white shadow-lg ring-1 ring-spl-border flex items-center justify-center p-2.5 mx-auto">
-            <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={72} height={72} className="object-contain w-full h-full" />
-          </div>
-          <p className="mt-3 text-sm text-spl-text-muted">Seaview Properties Limited Procurement Portal</p>
-        </div>
-
         <div className="w-full max-w-lg space-y-6">
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-bold text-spl-navy">Contractor Registration</h1>

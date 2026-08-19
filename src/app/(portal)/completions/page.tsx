@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ClipboardList, ArrowRight } from 'lucide-react'
-import { COMPLETION_STATUS_LABELS } from '@/lib/constants'
+import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
 import type { Profile, CompletionReport, CompletionStatus } from '@/types/database'
 
@@ -87,7 +87,9 @@ export default async function CompletionsPage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <Badge className={STATUS_COLORS[status]}>
-                        {COMPLETION_STATUS_LABELS[status]}
+                        {p.role === 'contractor'
+                          ? (CONTRACTOR_COMPLETION_STATUS_LABELS[status] ?? COMPLETION_STATUS_LABELS[status])
+                          : COMPLETION_STATUS_LABELS[status]}
                       </Badge>
                       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
                     </div>

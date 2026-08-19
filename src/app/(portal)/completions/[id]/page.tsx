@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { CompletionActions } from './CompletionActions'
 import { ArrowLeft, FileText, Image } from 'lucide-react'
-import { COMPLETION_STATUS_LABELS, INTERNAL_ROLES } from '@/lib/constants'
+import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS, INTERNAL_ROLES } from '@/lib/constants'
 import { formatDateTime } from '@/lib/utils/format'
 import type { Profile, CompletionReport, CompletionStatus, CompletionDocument } from '@/types/database'
 
@@ -51,6 +51,11 @@ export default async function CompletionDetailPage({ params }: PageProps) {
   const images = typedDocs.filter(d => d.document_type === 'image')
   const otherDocs = typedDocs.filter(d => d.document_type !== 'image')
 
+  const isContractor = p.role === 'contractor'
+  const statusLabel = isContractor
+    ? (CONTRACTOR_COMPLETION_STATUS_LABELS[status] ?? COMPLETION_STATUS_LABELS[status])
+    : COMPLETION_STATUS_LABELS[status]
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -60,7 +65,7 @@ export default async function CompletionDetailPage({ params }: PageProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold text-slate-800 truncate">{report.title}</h1>
-            <Badge className={STATUS_COLORS[status]}>{COMPLETION_STATUS_LABELS[status]}</Badge>
+            <Badge className={STATUS_COLORS[status]}>{statusLabel}</Badge>
           </div>
           <p className="text-slate-500 mt-1">{report.contracts?.contract_number} · Submitted {formatDateTime(report.submitted_at)}</p>
         </div>
@@ -137,6 +142,59 @@ export default async function CompletionDetailPage({ params }: PageProps) {
           {/* Actions for internal staff */}
           {INTERNAL_ROLES.includes(p.role) && (
             <CompletionActions completion={report} profile={p} projectSupervisorId={projectSupervisorId} />
+          )}
+
+          {/* Workflow guide for contractors */}
+          {isContractor && (
+            <Card className="border-0 shadow-sm bg-slate-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold text-slate-700">Payment Process</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="space-y-3">
+                  <li className="flex gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['supervisor_review', 'md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Submit Completion Report</p>
+                      <p className="text-xs text-slate-500">You upload evidence of job completion</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Project Supervisor Review</p>
+                      <p className="text-xs text-slate-500">Supervisor verifies the work on-site</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>3</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">MD Final Acceptance</p>
+                      <p className="text-xs text-slate-500">Managing Director gives final approval</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>4</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Audit & Accounts Review</p>
+                      <p className="text-xs text-slate-500">Finance team processes your payment</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${status === 'payment_completed' ? 'bg-spl-success text-white' : status === 'payment_pending' ? 'bg-spl-blue text-white' : 'bg-slate-200 text-slate-500'}`}>5</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Payment Completed</p>
+                      <p className="text-xs text-slate-500">Funds transferred to your bank account</p>
+                    </div>
+                  </li>
+                </ol>
+                {status === 'rejected' && (
+                  <div className="mt-4 p-3 bg-spl-danger-bg rounded-lg border border-red-100">
+                    <p className="text-sm text-spl-danger font-medium">Your completion report was rejected. Please review the rejection reason above and submit a new report.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
 

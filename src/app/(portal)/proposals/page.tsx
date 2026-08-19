@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FileText, Plus, ArrowRight } from 'lucide-react'
-import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS } from '@/lib/constants'
+import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import type { Profile, Proposal, ProposalStatus } from '@/types/database'
 
@@ -92,6 +92,9 @@ export default async function ProposalsPage() {
               {proposals.map(proposal => {
                 const status = proposal.status as ProposalStatus
                 const contractor = (proposal as unknown as { contractors?: { company_name: string } }).contractors
+                const statusLabel = p.role === 'contractor'
+                  ? (CONTRACTOR_PROPOSAL_STATUS_LABELS[status] ?? PROPOSAL_STATUS_LABELS[status])
+                  : PROPOSAL_STATUS_LABELS[status]
                 return (
                   <Link
                     key={proposal.id}
@@ -114,7 +117,7 @@ export default async function ProposalsPage() {
                         {formatCurrency(proposal.estimated_cost)}
                       </p>
                       <Badge className={PROPOSAL_STATUS_COLORS[status]}>
-                        {PROPOSAL_STATUS_LABELS[status]}
+                        {statusLabel}
                       </Badge>
                       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
                     </div>

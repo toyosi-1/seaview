@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Briefcase, Plus, ArrowRight, CalendarDays } from 'lucide-react'
 import { TENDER_STATUS_LABELS, TENDER_STATUS_COLORS } from '@/lib/constants'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
 import type { Profile, Tender, TenderStatus } from '@/types/database'
 
 export default async function TendersPage() {
@@ -20,15 +20,15 @@ export default async function TendersPage() {
 
   let query = supabase
     .from('tenders')
-    .select('*,profiles!tenders_posted_by_fkey(full_name)')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (isContractor) {
-    query = query.in('status', ['open', 'awarded', 'closed'])
+    query = query.eq('status', 'open')
   }
 
   const { data: tendersRaw } = await query
-  const tenders = (tendersRaw ?? []) as unknown as (Tender & { profiles?: { full_name: string } })[]
+  const tenders = (tendersRaw ?? []) as unknown as Tender[]
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -89,7 +89,6 @@ export default async function TendersPage() {
             <div className="space-y-2">
               {tenders.map(tender => {
                 const status = tender.status as TenderStatus
-                const poster = tender.profiles
                 return (
                   <Link
                     key={tender.id}
@@ -103,16 +102,12 @@ export default async function TendersPage() {
                       <p className="font-semibold text-slate-800 text-base truncate">{tender.title}</p>
                       <p className="text-sm text-slate-500 truncate">
                         {tender.contract_number}
-                        {poster && ` · Posted by ${poster.full_name ?? 'Staff'}`}
                         {tender.closing_date && (
                           <> · <CalendarDays className="w-3.5 h-3.5 inline -mt-0.5" /> Closes {formatDate(tender.closing_date)}</>
                         )}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-base font-bold text-slate-700 hidden md:block">
-                        {formatCurrency(tender.estimated_value)}
-                      </p>
                       <Badge className={TENDER_STATUS_COLORS[status]}>
                         {TENDER_STATUS_LABELS[status]}
                       </Badge>

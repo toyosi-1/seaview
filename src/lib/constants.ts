@@ -9,7 +9,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   head_of_audit: 'Head of Audit',
   head_of_accounts: 'Head of Accounts',
   ict_admin: 'ICT Administrator',
-  contract_officer: 'Contract Officer',
+  contract_officer: 'Procurement Officer',
   procurement_officer: 'Procurement Officer', // legacy
 }
 

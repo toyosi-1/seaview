@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { SignatureUpload } from './SignatureUpload'
 import { Building2, Phone, Mail, MapPin, Landmark, CreditCard, FileText, ExternalLink } from 'lucide-react'
 import { CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
@@ -35,7 +34,6 @@ export default async function ContractorProfilePage() {
   }
 
   const c = contractor as Contractor
-  const p = profile as Profile
 
   const { data: documents } = await supabase
     .from('contractor_documents').select('*').eq('contractor_id', c.id)
@@ -68,14 +66,6 @@ export default async function ContractorProfilePage() {
           </div>
         </div>
       </div>
-
-      {c.status === 'pending' && (
-        <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-200">
-          <p className="text-spl-warning font-medium">
-            ⏳ Your account is pending verification. You will be notified once it has been reviewed by our team.
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-0 shadow-sm">
@@ -141,15 +131,6 @@ export default async function ContractorProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Digital Signature */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-slate-700">Digital Signature</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SignatureUpload profile={p} />
-        </CardContent>
-      </Card>
     </div>
   )
 }

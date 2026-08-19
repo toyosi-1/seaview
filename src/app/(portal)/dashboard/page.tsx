@@ -17,7 +17,7 @@ import {
   ArrowRight,
   Clock,
 } from 'lucide-react'
-import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, ROLE_LABELS } from '@/lib/constants'
+import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils/format'
 import type { Profile, Proposal, ProposalStatus, CompletionReport, ContractorStatus, UserRole } from '@/types/database'
 
@@ -84,7 +84,6 @@ export default async function DashboardPage() {
 
   // Fetch proposal status breakdown for staff
   let proposalStatusData: { status: ProposalStatus; count: number }[] = []
-  let pendingContractorCount = 0
 
   if (!isContractor) {
     const statuses: ProposalStatus[] = ['submitted', 'md_review', 'procurement_appraisal', 'md_final_review', 'ict_assignment', 'approved', 'rejected', 'returned']
@@ -95,9 +94,6 @@ export default async function DashboardPage() {
       })
     )
     proposalStatusData = statusCounts.filter(d => d.count > 0)
-
-    const { count: pendingCount } = await supabase.from('contractors').select('*', { count: 'exact', head: true }).eq('status', 'pending')
-    pendingContractorCount = pendingCount ?? 0
   }
 
   // Completions awaiting the current user's review as Project Supervisor
@@ -198,15 +194,17 @@ export default async function DashboardPage() {
               href="/completions"
               urgent={completionCount > 0}
             />
-            <StatCard
-              title="Payments Pending"
-              value={paymentPendingCount}
-              icon={Banknote}
-              color="text-spl-danger"
-              bgColor="bg-spl-danger-bg"
-              href="/payments"
-              urgent={paymentPendingCount > 0}
-            />
+            {['head_of_accounts', 'ict_admin'].includes(p.role) && (
+              <StatCard
+                title="Payments Pending"
+                value={paymentPendingCount}
+                icon={Banknote}
+                color="text-spl-danger"
+                bgColor="bg-spl-danger-bg"
+                href="/payments"
+                urgent={paymentPendingCount > 0}
+              />
+            )}
             <StatCard
               title="Registered Contractors"
               value={contractorCount}
@@ -258,8 +256,9 @@ export default async function DashboardPage() {
         <PendingActionsWidget actions={[
           { label: 'Quotations awaiting approval', count: pendingApprovalCount, href: '/proposals', urgent: true },
           { label: 'Completion reports awaiting verification', count: completionCount, href: '/completions', urgent: true },
-          { label: 'Payments pending approval', count: paymentPendingCount, href: '/payments', urgent: true },
-          { label: 'Contractors pending verification', count: pendingContractorCount, href: '/contractors', urgent: pendingContractorCount > 0 },
+          ...(p.role === 'head_of_accounts' || p.role === 'ict_admin'
+            ? [{ label: 'Payments pending approval', count: paymentPendingCount, href: '/payments', urgent: true }]
+            : []),
         ]} />
       )}
 
@@ -351,6 +350,9 @@ export default async function DashboardPage() {
               <div className="space-y-1">
                 {recentActivity.map((proposal) => {
                   const status = proposal.status as ProposalStatus
+                  const statusLabel = isContractor
+                    ? (CONTRACTOR_PROPOSAL_STATUS_LABELS[status] ?? PROPOSAL_STATUS_LABELS[status])
+                    : PROPOSAL_STATUS_LABELS[status]
                   return (
                     <Link
                       key={proposal.id}
@@ -371,7 +373,7 @@ export default async function DashboardPage() {
                           {formatCurrency(proposal.estimated_cost)}
                         </p>
                         <Badge className={PROPOSAL_STATUS_COLORS[status]}>
-                          {PROPOSAL_STATUS_LABELS[status]}
+                          {statusLabel}
                         </Badge>
                         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                       </div>

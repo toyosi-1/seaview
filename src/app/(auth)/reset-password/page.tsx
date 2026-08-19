@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import Image from 'next/image'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -14,7 +13,7 @@ import { BrandPanel } from '@/components/auth/BrandPanel'
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-spl-navy" />}>
+    <Suspense fallback={<div className="min-h-screen bg-spl-blue" />}>
       <ResetPasswordContent />
     </Suspense>
   )
@@ -27,6 +26,23 @@ function ResetPasswordContent() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [exchanging, setExchanging] = useState(true)
+
+  useEffect(() => {
+    const code = searchParams.get('code')
+    if (!code) {
+      setExchanging(false)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      if (error) {
+        toast.error('Invalid or expired reset link. Please request a new one.')
+        setTimeout(() => router.push('/forgot-password'), 2000)
+      }
+      setExchanging(false)
+    })
+  }, [searchParams, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,6 +57,7 @@ function ResetPasswordContent() {
 
     setLoading(true)
     try {
+      if (exchanging) throw new Error('Please wait while we verify your reset link')
       const supabase = createClient()
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
@@ -55,18 +72,10 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <BrandPanel />
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
-        {/* Compact mobile brand header */}
-        <div className="lg:hidden text-center mb-6 mt-4">
-          <div className="w-20 h-20 rounded-full bg-white shadow-lg ring-1 ring-spl-border flex items-center justify-center p-2.5 mx-auto">
-            <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={72} height={72} className="object-contain w-full h-full" />
-          </div>
-          <p className="mt-3 text-sm text-spl-text-muted">Seaview Properties Limited</p>
-        </div>
-
         <div className="w-full max-w-md space-y-6">
           <Card className="border border-spl-border shadow-lg lg:shadow-none lg:border-0 bg-white">
             <CardHeader className="pb-4">
@@ -84,6 +93,11 @@ function ResetPasswordContent() {
                     <CheckCircle className="w-8 h-8 text-spl-success" />
                   </div>
                   <p className="text-slate-600">Redirecting you to login...</p>
+                </div>
+              ) : exchanging ? (
+                <div className="py-8 text-center">
+                  <Loader2 className="w-8 h-8 mx-auto animate-spin text-spl-blue mb-3" />
+                  <p className="text-slate-600">Verifying your reset link...</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">

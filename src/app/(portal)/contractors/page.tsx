@@ -3,8 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Building2, ArrowRight, Plus, AlertCircle } from 'lucide-react'
+import { Building2, ArrowRight } from 'lucide-react'
 import { CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, INTERNAL_ROLES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
 import type { Profile, Contractor, ContractorStatus } from '@/types/database'
@@ -22,9 +21,6 @@ export default async function ContractorsPage() {
     .select('*')
     .order('created_at', { ascending: false })
 
-  const pendingContractors = (contractors as Contractor[] ?? []).filter(c => c.status === 'pending')
-  const activeContractors = (contractors as Contractor[] ?? []).filter(c => c.status !== 'pending')
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
@@ -33,41 +29,6 @@ export default async function ContractorsPage() {
           <p className="text-slate-500 mt-1">Manage all registered contractors</p>
         </div>
       </div>
-
-      {/* Pending Approvals */}
-      {pendingContractors.length > 0 && (
-        <Card className="border-0 shadow-sm border-l-4 border-l-amber-500">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-500" />
-              Pending Approval ({pendingContractors.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {pendingContractors.map(c => (
-                <Link
-                  key={c.id}
-                  href={`/contractors/${c.id}`}
-                  className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-spl-warning-bg transition-colors group border border-transparent hover:border-amber-200"
-                >
-                  <div className="w-12 h-12 rounded-full bg-spl-warning-bg flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-6 h-6 text-spl-warning" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-800 text-base truncate">{c.company_name}</p>
-                    <p className="text-sm text-slate-500 truncate">
-                      CAC: {c.cac_number} · TIN: {c.tin_number} · {c.email}
-                    </p>
-                  </div>
-                  <Badge className="bg-yellow-100 text-yellow-800">Pending Verification</Badge>
-                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">

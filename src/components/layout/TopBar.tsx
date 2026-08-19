@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -127,15 +126,6 @@ export function TopBar({ profile }: { profile: Profile }) {
             ))}
           </div>
         )}
-      </div>
-
-      {/* NPA institutional mark */}
-      <div className="hidden sm:flex items-center gap-2.5 flex-shrink-0 pr-3 border-r border-spl-border">
-        <Image src="/brand/npa-logo-mark.png" alt="Nigerian Ports Authority" width={40} height={40} className="object-contain w-10 h-10" />
-        <div className="hidden xl:block leading-tight">
-          <p className="text-[10px] text-spl-text-muted">Parent Organization</p>
-          <p className="text-xs font-semibold text-spl-navy">Nigerian Ports Authority</p>
-        </div>
       </div>
 
       {/* Notifications */}

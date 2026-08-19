@@ -15,21 +15,21 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon: Icon, color, bgColor, href, urgent }: StatCardProps) {
   return (
-    <Link href={href}>
+    <Link href={href} className="block h-full">
       <Card className={cn(
-        'cursor-pointer hover:shadow-md transition-all duration-200 border border-spl-border shadow-sm',
+        'cursor-pointer hover:shadow-md transition-all duration-200 border border-spl-border shadow-sm h-full',
         urgent && 'ring-1 ring-spl-danger/40'
       )}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-6 h-full">
+          <div className="flex items-center justify-between h-full">
             <div>
               <p className="text-sm font-medium text-spl-text-muted mb-1">{title}</p>
               <p className={cn('text-4xl font-bold tracking-tight', color)}>{value}</p>
-              {urgent && (
-                <p className="text-xs text-spl-danger font-medium mt-1">Requires attention</p>
-              )}
+              <p className="text-xs font-medium mt-1 h-4 text-spl-danger">
+                {urgent ? 'Requires attention' : ''}
+              </p>
             </div>
-            <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center', bgColor)}>
+            <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0', bgColor)}>
               <Icon className={cn('w-7 h-7', color)} />
             </div>
           </div>

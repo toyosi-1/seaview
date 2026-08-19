@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, FileText } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
-import { DEPARTMENT_LABELS, ROLE_LABELS } from '@/lib/constants'
+import { DEPARTMENT_LABELS } from '@/lib/constants'
 import { DownloadAwardLetter } from './DownloadAwardLetter'
 import { TerminateContract } from './TerminateContract'
 import { CompletionPeriodEditor } from './CompletionPeriodEditor'
@@ -35,7 +35,13 @@ export default async function ContractDetailPage({ params }: PageProps) {
     project_supervisor: { full_name: string } | null
   }
 
-  const { data: mdProfileRaw } = await supabase.from('profiles').select('full_name,signature_url,role').eq('id', c.awarded_by).single()
+  const { data: mdProfileRaw } = await supabase
+    .from('profiles')
+    .select('full_name,signature_url,role')
+    .eq('role', 'md')
+    .eq('is_active', true)
+    .limit(1)
+    .single()
   const mdProfile = mdProfileRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
 
   const INTERNAL_EDIT_ROLES: UserRole[] = ['md', 'head_of_procurement', 'ict_admin']
@@ -139,7 +145,6 @@ export default async function ContractDetailPage({ params }: PageProps) {
                     completionPeriod={c.completion_period ?? undefined}
                     mdName={mdProfile?.full_name ?? 'Managing Director'}
                     mdSignatureUrl={mdProfile?.signature_url ?? undefined}
-                    awardedByRole={mdProfile?.role ? ROLE_LABELS[mdProfile.role] : undefined}
                   />
                 </>
               ) : (

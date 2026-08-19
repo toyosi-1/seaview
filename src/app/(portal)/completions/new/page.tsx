@@ -25,7 +25,6 @@ export default function NewCompletionPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [completionReport, setCompletionReport] = useState<File | null>(null)
-  const [certificate, setCertificate] = useState<File | null>(null)
   const [images, setImages] = useState<FileList | null>(null)
   const [supporting, setSupporting] = useState<FileList | null>(null)
 
@@ -40,6 +39,14 @@ export default function NewCompletionPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!contractId) { toast.error('No contract selected'); return }
+    if (!title.trim() || !description.trim()) {
+      toast.error('Title and description are required')
+      return
+    }
+    if (!completionReport && (!images || images.length === 0)) {
+      toast.error('Please upload a completion report or at least one completion image')
+      return
+    }
     setLoading(true)
     try {
       const supabase = createClient()
@@ -82,7 +89,6 @@ export default function NewCompletionPage() {
 
       const uploads: Promise<void>[] = []
       if (completionReport) uploads.push(uploadFile(completionReport, 'completion_report'))
-      if (certificate) uploads.push(uploadFile(certificate, 'certificate'))
       if (images) Array.from(images).forEach((f, i) => uploads.push(uploadFile(f, 'image', i)))
       if (supporting) Array.from(supporting).forEach((f, i) => uploads.push(uploadFile(f, 'supporting', i)))
       await Promise.all(uploads)
@@ -156,19 +162,17 @@ export default function NewCompletionPage() {
             <CardTitle className="text-lg font-semibold text-slate-700">Upload Documents & Evidence</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {[
-              { label: 'Completion Report (PDF) *', setter: setCompletionReport, accept: '.pdf,.doc,.docx', multi: false, state: completionReport },
-              { label: 'Completion Certificate *', setter: setCertificate, accept: '.pdf,.png,.jpg,.jpeg', multi: false, state: certificate },
-            ].map(({ label, setter, accept, state }) => (
-              <div key={label} className="space-y-2">
-                <Label className="text-base font-medium">{label}</Label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors">
-                  <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-                  <Input type="file" accept={accept} onChange={e => setter(e.target.files?.[0] ?? null)} className="h-10 cursor-pointer max-w-xs mx-auto" />
-                  {state && <p className="text-sm text-spl-success font-medium mt-2">✓ {state.name}</p>}
-                </div>
+            <p className="text-sm text-slate-600 -mt-2">
+              Upload <strong>either</strong> a completion report or completion images.
+            </p>
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Completion Report (PDF)</Label>
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-blue-300 transition-colors">
+                <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                <Input type="file" accept=".pdf,.doc,.docx" onChange={e => setCompletionReport(e.target.files?.[0] ?? null)} className="h-10 cursor-pointer max-w-xs mx-auto" />
+                {completionReport && <p className="text-sm text-spl-success font-medium mt-2">✓ {completionReport.name}</p>}
               </div>
-            ))}
+            </div>
 
             <div className="space-y-2">
               <Label className="text-base font-medium">Completion Images (multiple allowed)</Label>
@@ -194,7 +198,7 @@ export default function NewCompletionPage() {
           <Button asChild variant="outline" size="lg" className="flex-1 h-12 text-base">
             <Link href="/completions">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={loading || !title || !description || !completionReport || !certificate} size="lg" className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white">
+          <Button type="submit" disabled={loading} size="lg" className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white">
             {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Submitting...</> : <><ClipboardList className="w-5 h-5 mr-2" />Submit Report</>}
           </Button>
         </div>

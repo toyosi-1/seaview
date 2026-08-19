@@ -19,25 +19,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  logoCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#1e3a8a',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
+  logoImage: {
+    width: 44,
+    height: 44,
+    marginBottom: 4,
+    objectFit: 'contain',
   },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
+  orgNameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   orgName: {
     fontSize: 15,
     fontFamily: 'Helvetica-Bold',
     color: '#1a1a2e',
     textAlign: 'center',
+  },
+  rcNumber: {
+    fontSize: 6.5,
+    color: '#64748b',
+    marginLeft: 4,
+    marginBottom: 3,
   },
   orgSub: {
     fontSize: 8.5,
@@ -117,14 +120,30 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 25,
+    bottom: 22,
     left: 50,
     right: 50,
     alignItems: 'center',
   },
+  footerLogo: {
+    width: 26,
+    height: 26,
+    marginBottom: 4,
+    objectFit: 'contain',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerLine: {
+    width: 55,
+    borderBottom: '0.75px solid #94a3b8',
+  },
   footerText: {
     fontSize: 8,
     color: '#475569',
+    marginHorizontal: 8,
   },
 })
 
@@ -141,18 +160,18 @@ interface AwardLetterData {
   completionPeriod?: string
   mdName: string
   mdSignatureUrl?: string
-  awardedByRole?: string
 }
 
 const VAT_RATE = 7.5
 const STAMP_DUTY_RATE = 1
 
-/** Formats a UserRole-style label into official signature-block style, e.g. "Head of Procurement" -> "Head, Procurement" */
-function formatSignatureRole(roleLabel?: string): string {
-  if (!roleLabel) return 'Managing Director'
-  if (roleLabel.startsWith('Head of ')) return `Head, ${roleLabel.replace('Head of ', '')}`
-  return roleLabel
-}
+const logoSrc = typeof window !== 'undefined'
+  ? `${window.location.origin}/brand/spl-logo-mark.png`
+  : '/brand/spl-logo-mark.png'
+
+const npaLogoSrc = typeof window !== 'undefined'
+  ? `${window.location.origin}/brand/npa-logo-mark.png`
+  : '/brand/npa-logo-mark.png'
 
 function AwardLetterDoc({ data }: { data: AwardLetterData }) {
   const formattedValue = new Intl.NumberFormat('en-NG', {
@@ -162,18 +181,17 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
 
   const valueInWords = nairaToWords(data.contractValue)
   const completionPeriod = data.completionPeriod?.trim() || 'a period to be agreed with the Head, Environment'
-  const signatureRole = formatSignatureRole(data.awardedByRole)
-  const isMd = signatureRole === 'Managing Director'
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header / Letterhead */}
         <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>SPL</Text>
+          <Image style={styles.logoImage} src={logoSrc} />
+          <View style={styles.orgNameRow}>
+            <Text style={styles.orgName}>Seaview Properties Limited</Text>
+            <Text style={styles.rcNumber}>RC: 188520</Text>
           </View>
-          <Text style={styles.orgName}>Seaview Properties Limited</Text>
           <Text style={styles.orgSub}>1, Joseph Street, (Off Marina) Lagos. Tel: 09090527529</Text>
           <Text style={styles.orgSub}>E-mail: Seaviewpropertiesltd@gmail.com  www.Seaviewpropertiesltd.com.ng</Text>
         </View>
@@ -230,12 +248,16 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
           {data.mdSignatureUrl && <Image src={data.mdSignatureUrl} style={styles.sigImage} />}
         </View>
         <Text style={styles.sigName}>{data.mdName}</Text>
-        <Text style={styles.sigTitle}>{signatureRole}</Text>
-        {!isMd && <Text style={styles.sigTitle}>For: Managing Director SPL</Text>}
+        <Text style={styles.sigTitle}>Managing Director</Text>
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>(A Subsidiary of Nigerian Ports Authority)</Text>
+          <Image style={styles.footerLogo} src={npaLogoSrc} />
+          <View style={styles.footerRow}>
+            <View style={styles.footerLine} />
+            <Text style={styles.footerText}>(A Subsidiary of Nigerian Ports Authority)</Text>
+            <View style={styles.footerLine} />
+          </View>
         </View>
       </Page>
     </Document>

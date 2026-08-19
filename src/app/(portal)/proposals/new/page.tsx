@@ -13,14 +13,12 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { compressImage, compressFiles } from '@/lib/utils/compress'
 import { notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
-import { formatCurrency } from '@/lib/utils/format'
 
 interface TenderOption {
   id: string
   title: string
   contract_number: string
   description: string
-  estimated_value: number
 }
 
 export default function NewProposalPage() {
@@ -50,7 +48,7 @@ function NewProposalContent() {
       const supabase = createClient()
       const { data } = await supabase
         .from('tenders')
-        .select('id,title,contract_number,description,estimated_value')
+        .select('id,title,contract_number,description')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
       const list = (data ?? []) as unknown as TenderOption[]
@@ -60,7 +58,6 @@ function NewProposalContent() {
         if (t) {
           setTitle(t.title)
           setDescription(t.description)
-          setEstimatedCost(String(t.estimated_value))
         }
       }
     }
@@ -73,7 +70,6 @@ function NewProposalContent() {
     if (t) {
       setTitle(t.title)
       setDescription(t.description)
-      setEstimatedCost(String(t.estimated_value))
     }
   }
 
@@ -259,7 +255,6 @@ function NewProposalContent() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-base">{tender.title}</p>
                       <p className="text-sm text-slate-500 font-mono">{tender.contract_number}</p>
-                      <p className="text-sm text-slate-600 mt-1">{formatCurrency(tender.estimated_value)}</p>
                     </div>
                   </label>
                 ))}

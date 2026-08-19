@@ -137,6 +137,14 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
           contract_number: '',
           approval_reference: proposal.proposal_number,
         } as never)
+
+        // Mark the tender as awarded so it leaves the available contracts list
+        if (proposal.tender_id) {
+          await supabase
+            .from('tenders')
+            .update({ status: 'awarded' } as never)
+            .eq('id', proposal.tender_id)
+        }
       }
 
       // Audit log

@@ -44,12 +44,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/contractors', label: 'Contractors', icon: Building2, roles: STAFF_ROLE_LIST },
   { href: '/contractor-profile', label: 'My Profile', icon: Building2, roles: ['contractor'] },
   { href: '/tenders', label: 'Available Contracts', icon: Briefcase },
-  { href: '/contracts', label: 'Awarded Contracts', icon: FileText, roles: STAFF_ROLE_LIST },
+  { href: '/contracts', label: 'Awarded Contracts', icon: FileText },
   { href: '/proposals', label: 'Quotations', icon: ClipboardList },
   { href: '/completions', label: 'Project Completions', icon: ClipboardList },
   { href: '/internal-procurement', label: 'Internal Procurement', icon: ShoppingCart, roles: STAFF_ROLE_LIST },
   { href: '/audit', label: 'Audit Reviews', icon: ShieldCheck, roles: ['head_of_audit', 'md', 'ict_admin'] },
-  { href: '/payments', label: 'Payments', icon: Banknote, roles: ['head_of_accounts', 'md', 'ict_admin', 'contractor'] },
+  { href: '/payments', label: 'Payments', icon: Banknote, roles: ['head_of_accounts', 'ict_admin', 'contractor'] },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/audit-log', label: 'Audit Log', icon: ScrollText, roles: ['md', 'ict_admin'] },
   { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ict_admin'] },
@@ -130,7 +130,7 @@ export function Sidebar({ profile }: SidebarProps) {
         />
       )}
       <aside className={cn(
-        'fixed left-0 top-0 h-full bg-spl-navy text-white flex flex-col z-40 transition-all duration-300',
+        'fixed left-0 top-0 h-full bg-spl-blue-dark text-white flex flex-col z-40 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
@@ -143,7 +143,6 @@ export function Sidebar({ profile }: SidebarProps) {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-white truncate leading-tight">Seaview Properties</p>
-              <p className="text-[11px] text-blue-200/70 truncate leading-tight">An NPA Subsidiary</p>
             </div>
           </div>
         )}
@@ -244,7 +243,7 @@ export function Sidebar({ profile }: SidebarProps) {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-30 lg:hidden w-10 h-10 rounded-lg bg-spl-navy text-white flex items-center justify-center shadow-lg"
+        className="fixed top-3 left-3 z-30 lg:hidden w-10 h-10 rounded-lg bg-spl-blue-dark text-white flex items-center justify-center shadow-lg"
         aria-label="Open menu"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>

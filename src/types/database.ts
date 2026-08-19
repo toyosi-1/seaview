@@ -142,7 +142,7 @@ export interface Tender {
   contract_number: string
   title: string
   description: string
-  estimated_value: number
+  estimated_value: number | null
   requirements: string | null
   closing_date: string | null
   status: TenderStatus

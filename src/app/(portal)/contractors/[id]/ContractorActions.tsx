@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { CheckCircle, Ban, RotateCcw } from 'lucide-react'
+import { Ban, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contractor, UserRole } from '@/types/database'
 import { notify, logAudit } from '@/lib/utils/notify'
@@ -42,9 +42,11 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
     if (error) {
       toast.error('Failed to update contractor status')
     } else {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+
       // Audit log
       await logAudit({
-        userId: contractor.user_id,
+        userId: currentUser?.id ?? contractor.user_id,
         userRole: currentRole,
         action: action === 'active' ? 'Contractor activated' : 'Contractor suspended',
         entityType: 'contractor',
@@ -75,17 +77,6 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
   return (
     <>
       <div className="flex gap-2">
-        {contractor.status === 'pending' && (
-          <Button
-            size="lg"
-            className="bg-spl-success hover:bg-spl-success-dark text-white h-11"
-            type="button"
-            onClick={() => { setAction('active'); setOpen(true) }}
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Verify & Approve
-          </Button>
-        )}
         {contractor.status === 'suspended' && (
           <Button
             size="lg"
@@ -117,11 +108,9 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
             <DialogTitle className="text-xl">Confirm Action</DialogTitle>
             <DialogDescription className="text-base mt-2">
               Are you sure you want to{' '}
-              {contractor.status === 'pending' && action === 'active'
-                ? <strong>verify and approve</strong>
-                : action === 'active'
-                  ? <strong>reactivate</strong>
-                  : <strong>suspend</strong>}{' '}
+              {action === 'active'
+                ? <strong>reactivate</strong>
+                : <strong>suspend</strong>}{' '}
               <strong>{contractor.company_name}</strong>?
             </DialogDescription>
           </DialogHeader>

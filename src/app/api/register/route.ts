@@ -44,12 +44,13 @@ export async function POST(request: Request) {
 
   const userId = userData.user.id
 
-  // Create profile row
+  // Create profile row — contractors are active immediately, no MD approval required
   const { error: profileError } = await admin.from('profiles').insert({
     id: userId,
     full_name: companyName.trim(),
     email,
     role: 'contractor',
+    is_active: true,
   } as never)
 
   if (profileError) {
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 400 })
   }
 
-  // Create contractor row
+  // Create contractor row — active immediately so they can bid
   const { error: contractorError } = await admin.from('contractors').insert({
     user_id: userId,
     company_name: companyName.trim(),
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
     contact_person: null,
     email,
     phone: null,
+    status: 'active',
   } as never)
 
   if (contractorError) {

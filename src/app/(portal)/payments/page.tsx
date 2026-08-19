@@ -14,6 +14,11 @@ export default async function PaymentsPage() {
   if (!profile) redirect('/login')
   const p = profile as Profile
 
+  // Only contractors, head of accounts, and ICT admin should access payments
+  if (!['contractor', 'head_of_accounts', 'ict_admin'].includes(p.role)) {
+    redirect('/dashboard')
+  }
+
   let payments: Payment[] = []
 
   if (p.role === 'contractor') {
@@ -28,7 +33,7 @@ export default async function PaymentsPage() {
         .order('created_at', { ascending: false })
       payments = (data ?? []) as unknown as Payment[]
     }
-  } else if (['head_of_accounts', 'md', 'ict_admin'].includes(p.role)) {
+  } else if (['head_of_accounts', 'ict_admin'].includes(p.role)) {
     const { data } = await supabase
       .from('payments')
       .select('*,contractors(company_name),contracts(title,contract_number)')

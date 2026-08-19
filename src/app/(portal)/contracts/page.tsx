@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Briefcase, ArrowRight } from 'lucide-react'
+import { Briefcase, ArrowRight, ClipboardList } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import type { Profile, Contract } from '@/types/database'
 
@@ -61,32 +61,44 @@ export default async function ContractsPage() {
               {contracts.map(c => {
                 const contractor = (c as unknown as { contractors?: { company_name: string } }).contractors
                 return (
-                  <Link
+                  <div
                     key={c.id}
-                    href={`/contracts/${c.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-spl-success-bg flex items-center justify-center flex-shrink-0">
-                      <Briefcase className="w-5 h-5 text-spl-success" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 text-base truncate">{c.title}</p>
-                      <p className="text-sm text-slate-500 truncate">
-                        {c.contract_number}
-                        {contractor && ` · ${contractor.company_name}`}
-                        {' · Awarded '}{formatDate(c.awarded_at)}
-                      </p>
-                    </div>
+                    <Link href={`/contracts/${c.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="w-11 h-11 rounded-full bg-spl-success-bg flex items-center justify-center flex-shrink-0">
+                        <Briefcase className="w-5 h-5 text-spl-success" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-base truncate">{c.title}</p>
+                        <p className="text-sm text-slate-500 truncate">
+                          {c.contract_number}
+                          {contractor && ` · ${contractor.company_name}`}
+                          {' · Awarded '}{formatDate(c.awarded_at)}
+                        </p>
+                      </div>
+                    </Link>
                     <div className="flex items-center gap-3 shrink-0">
                       <p className="text-base font-bold text-slate-700 hidden md:block">
                         {formatCurrency(c.contract_value)}
                       </p>
-                      <Badge className={statusColor(c.status)}>
-                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-                      </Badge>
+                      {p.role === 'contractor' && c.status === 'active' && (
+                        <Link
+                          href={`/completions/new?contract_id=${c.id}`}
+                          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-spl-blue hover:bg-spl-blue-dark text-white text-xs font-semibold transition-colors"
+                        >
+                          <ClipboardList className="w-3.5 h-3.5" />
+                          Submit Completion
+                        </Link>
+                      )}
+                      <Link href={`/contracts/${c.id}`}>
+                        <Badge className={statusColor(c.status)}>
+                          {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                        </Badge>
+                      </Link>
                       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Loader2, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { DEPARTMENTS, DEPARTMENT_LABELS, DEPARTMENT_HEAD_ROLE } from '@/lib/constants'
+import { DEPARTMENTS, DEPARTMENT_LABELS, DEPARTMENT_HEAD_ROLE, ROLE_LABELS } from '@/lib/constants'
 import type { Department, Profile, Proposal } from '@/types/database'
 import { notify, logAudit } from '@/lib/utils/notify'
 
@@ -41,6 +41,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         .limit(1)
         .single()
       const supervisor = supervisorRaw as unknown as { id: string } | null
+      if (!supervisor) throw new Error(`No active ${ROLE_LABELS[supervisorRole]} found. Please create one in User Management before assigning this department.`)
 
       const { data: contractRaw } = await supabase
         .from('contracts')
@@ -66,6 +67,14 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         .update({ status: 'approved', current_stage: 'approved' } as never)
         .eq('id', proposal.id)
       if (proposalError) throw proposalError
+
+      // Mark the tender as awarded so it leaves the available contracts list
+      if (proposal.tender_id) {
+        await supabase
+          .from('tenders')
+          .update({ status: 'awarded' } as never)
+          .eq('id', proposal.tender_id)
+      }
 
       await supabase.from('proposal_timeline').insert({
         proposal_id: proposal.id,

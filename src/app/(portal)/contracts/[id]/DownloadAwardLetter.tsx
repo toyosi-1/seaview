@@ -18,7 +18,6 @@ interface DownloadAwardLetterProps {
   completionPeriod?: string
   mdName: string
   mdSignatureUrl?: string
-  awardedByRole?: string
 }
 
 export function DownloadAwardLetter(props: DownloadAwardLetterProps) {

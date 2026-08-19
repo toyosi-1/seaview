@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Briefcase, CalendarDays, FileText, User, Plus } from 'lucide-react'
 import { TENDER_STATUS_LABELS, TENDER_STATUS_COLORS } from '@/lib/constants'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
 import type { Profile, Tender, TenderStatus } from '@/types/database'
 
 export default async function TenderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -84,13 +84,7 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-5">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Estimated Value</p>
-            <p className="text-xl font-bold text-slate-800 mt-1">{formatCurrency(tender.estimated_value)}</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-5">
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">

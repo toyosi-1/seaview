@@ -20,6 +20,11 @@ export default async function PaymentDetailPage({ params }: PageProps) {
   if (!profile) redirect('/login')
   const p = profile as Profile
 
+  // Only contractors, head of accounts, and ICT admin should access payments
+  if (!['contractor', 'head_of_accounts', 'ict_admin'].includes(p.role)) {
+    redirect('/dashboard')
+  }
+
   const { data: payment } = await supabase
     .from('payments')
     .select('*,contractors(company_name,bank_name,account_number,account_name),contracts(title,contract_number)')

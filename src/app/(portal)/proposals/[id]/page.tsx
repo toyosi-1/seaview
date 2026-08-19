@@ -13,7 +13,7 @@ import {
   ArrowLeft, FileText, Building2, Calendar, DollarSign, MessageSquare
 } from 'lucide-react'
 import {
-  PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, INTERNAL_ROLES
+  PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS, INTERNAL_ROLES, ROLE_LABELS
 } from '@/lib/constants'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
 import type { Profile, Proposal, ProposalTimeline, ProposalComment, ProposalDocument, ProposalStatus } from '@/types/database'
@@ -59,6 +59,9 @@ export default async function ProposalDetailPage({ params }: PageProps) {
 
   const status = prop.status as ProposalStatus
   const contractor = prop.contractors
+  const statusLabel = !isInternal
+    ? (CONTRACTOR_PROPOSAL_STATUS_LABELS[status] ?? PROPOSAL_STATUS_LABELS[status])
+    : PROPOSAL_STATUS_LABELS[status]
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -71,7 +74,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold text-slate-800 truncate">{prop.title}</h1>
             <Badge className={`${PROPOSAL_STATUS_COLORS[status]} text-sm px-3 py-1 font-semibold`}>
-              {PROPOSAL_STATUS_LABELS[status]}
+              {statusLabel}
             </Badge>
           </div>
           <p className="text-slate-500 mt-1 text-base">{prop.proposal_number}</p>
@@ -185,25 +188,38 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                   <p className="text-slate-400 text-center py-6">No comments yet</p>
                 ) : (
                   <div className="space-y-4">
-                    {(comments as ProposalComment[]).map(c => (
-                      <div key={c.id} className="flex gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
-                          {c.profiles ? ((c.profiles as { full_name: string | null }).full_name ?? 'Staff').slice(0, 2).toUpperCase() : '??'}
-                        </div>
-                        <div className="flex-1 bg-slate-50 rounded-xl p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-semibold text-slate-700">
-                              {c.profiles ? ((c.profiles as { full_name: string | null }).full_name ?? 'Staff') : 'Unknown'}
-                            </p>
-                            {c.action && (
-                              <Badge variant="outline" className="text-xs capitalize">{c.action}</Badge>
-                            )}
+                    {(comments as ProposalComment[]).map(c => {
+                      const author = c.profiles as { full_name: string | null; role: string | null } | undefined
+                      const authorName = author?.full_name
+                        ? author.full_name
+                        : author?.role
+                          ? ROLE_LABELS[author.role as keyof typeof ROLE_LABELS] ?? author.role
+                          : 'Staff'
+                      const authorInitials = author?.full_name
+                        ? author.full_name.slice(0, 2).toUpperCase()
+                        : author?.role
+                          ? (ROLE_LABELS[author.role as keyof typeof ROLE_LABELS] ?? author.role).slice(0, 2).toUpperCase()
+                          : '??'
+                      return (
+                        <div key={c.id} className="flex gap-3">
+                          <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
+                            {authorInitials}
                           </div>
-                          <p className="text-sm text-slate-600">{c.comment}</p>
-                          <p className="text-xs text-slate-400 mt-1">{formatDateTime(c.created_at)}</p>
+                          <div className="flex-1 bg-slate-50 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="text-sm font-semibold text-slate-700">
+                                {authorName}
+                              </p>
+                              {c.action && (
+                                <Badge variant="outline" className="text-xs capitalize">{c.action}</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-600">{c.comment}</p>
+                            <p className="text-xs text-slate-400 mt-1">{formatDateTime(c.created_at)}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>

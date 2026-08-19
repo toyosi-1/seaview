@@ -18,13 +18,12 @@ export default function NewTenderPage() {
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [estimatedValue, setEstimatedValue] = useState('')
   const [requirements, setRequirements] = useState('')
   const [closingDate, setClosingDate] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title || !description || !estimatedValue) {
+    if (!title || !description) {
       toast.error('Please fill all required fields')
       return
     }
@@ -39,7 +38,6 @@ export default function NewTenderPage() {
         .insert({
           title: title.trim(),
           description: description.trim(),
-          estimated_value: parseFloat(estimatedValue.replace(/,/g, '')),
           requirements: requirements.trim() || null,
           closing_date: closingDate ? new Date(closingDate).toISOString() : null,
           status: 'open',
@@ -114,31 +112,15 @@ export default function NewTenderPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label className="text-base font-medium text-slate-700">Estimated Value (₦) *</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-base">₦</span>
-                  <Input
-                    value={estimatedValue}
-                    onChange={e => setEstimatedValue(e.target.value)}
-                    placeholder="5,000,000"
-                    className="h-12 text-base pl-8"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-base font-medium text-slate-700">Closing Date</Label>
-                <Input
-                  type="date"
-                  value={closingDate}
-                  onChange={e => setClosingDate(e.target.value)}
-                  className="h-12 text-base"
-                />
-                <p className="text-xs text-slate-500">Leave blank if open-ended</p>
-              </div>
+            <div className="space-y-2">
+              <Label className="text-base font-medium text-slate-700">Closing Date</Label>
+              <Input
+                type="date"
+                value={closingDate}
+                onChange={e => setClosingDate(e.target.value)}
+                className="h-12 text-base"
+              />
+              <p className="text-xs text-slate-500">Leave blank if open-ended</p>
             </div>
           </CardContent>
         </Card>
@@ -164,7 +146,7 @@ export default function NewTenderPage() {
           </Button>
           <Button
             type="submit"
-            disabled={loading || !title || !description || !estimatedValue}
+            disabled={loading || !title || !description}
             size="lg"
             className="flex-1 h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white"
           >

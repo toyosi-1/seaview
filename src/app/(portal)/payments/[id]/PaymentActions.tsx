@@ -47,6 +47,21 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
       const { error } = await supabase.from('payments').update(update as never).eq('id', payment.id)
       if (error) throw error
 
+      // When payment is approved, mark the contract and completion report as completed
+      if (action === 'approve') {
+        await supabase
+          .from('contracts')
+          .update({ status: 'completed' } as never)
+          .eq('id', payment.contract_id)
+
+        if (payment.completion_id) {
+          await supabase
+            .from('completion_reports')
+            .update({ status: 'payment_completed' } as never)
+            .eq('id', payment.completion_id)
+        }
+      }
+
       // Upload evidence files
       if (action === 'approve' && evidenceFiles) {
         const uploads = Array.from(evidenceFiles).map(async (file, i) => {
@@ -86,7 +101,7 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
         const isRejected = action === 'reject'
         await notify({
           userId: contractor.user_id,
-          type: isCompleted ? 'payment_completed' : isRejected ? 'payment_approved' : 'payment_approved',
+          type: isCompleted ? 'payment_completed' : isRejected ? 'proposal_rejected' : 'payment_approved',
           title: isCompleted ? 'Payment Completed' : isRejected ? 'Payment Rejected' : 'Payment On Hold',
           message: `Payment of ${formatCurrency(payment.amount)} for "${payment.contractors?.company_name ?? 'contract'}" has been ${action === 'approve' ? 'completed' : action === 'hold' ? 'put on hold' : 'rejected'}.`,
           referenceId: payment.id,
