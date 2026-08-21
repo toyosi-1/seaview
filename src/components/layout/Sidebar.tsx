@@ -142,7 +142,7 @@ export function Sidebar({ profile }: SidebarProps) {
               <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} className="object-contain w-full h-full" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white leading-tight whitespace-nowrap">Seaview Properties Ltd</p>
+              <p className="text-sm font-bold text-white leading-tight whitespace-nowrap">Seaview Properties Limited</p>
             </div>
           </div>
         )}
