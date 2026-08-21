@@ -90,7 +90,7 @@ function NewProposalContent() {
       if (!user) throw new Error('Not authenticated')
 
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('id,status').eq('user_id', user.id).single()
+        .from('contractors').select('id,status').eq('user_id', user.id).maybeSingle()
       const contractor = contractorRaw as unknown as { id: string; status: string } | null
       if (!contractor) throw new Error('Contractor profile not found. Please complete registration.')
       if (contractor.status !== 'active') throw new Error('Your contractor account is not yet active. Please wait for verification.')
@@ -105,6 +105,11 @@ function NewProposalContent() {
         throw new Error('You have already submitted a quotation for this contract.')
       }
 
+      const estimatedCostValue = parseFloat(estimatedCost.replace(/,/g, ''))
+      if (!Number.isFinite(estimatedCostValue) || estimatedCostValue < 0) {
+        throw new Error('Estimated cost must be a non-negative number')
+      }
+
       // Create proposal
       const { data: proposalRaw, error: proposalError } = await supabase
         .from('proposals')
@@ -113,14 +118,14 @@ function NewProposalContent() {
           tender_id: selectedTenderId,
           title: title.trim(),
           description: description.trim(),
-          estimated_cost: parseFloat(estimatedCost.replace(/,/g, '')),
+          estimated_cost: estimatedCostValue,
           status: 'submitted',
           current_stage: 'md_review',
-          proposal_number: '',
-        } as never)
+        })
         .select()
-        .single()
+        .maybeSingle()
       if (proposalError) throw proposalError
+      if (!proposalRaw) throw new Error('Failed to create proposal')
       const proposal = proposalRaw as unknown as { id: string }
 
       // Upload proposal document (compress if image)
@@ -137,7 +142,7 @@ function NewProposalContent() {
           file_url: publicUrl,
           file_size: compressed.size,
           uploaded_by: user.id,
-        } as never)
+        })
       }
 
       // Upload supporting docs (compress images)
@@ -155,7 +160,7 @@ function NewProposalContent() {
             file_url: publicUrl,
             file_size: file.size,
             uploaded_by: user.id,
-          } as never)
+          })
         })
         await Promise.all(uploads)
       }
@@ -167,7 +172,7 @@ function NewProposalContent() {
         stage: 'submitted',
         action: 'Quotation submitted',
         note: `Quotation submitted for review. Estimated cost: ₦${parseFloat(estimatedCost.replace(/,/g, '')).toLocaleString()}`,
-      } as never)
+      })
 
       // Audit log
       await logAudit({
@@ -277,7 +282,7 @@ function NewProposalContent() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="e.g. Construction of Warehouse Facility"
-                className="h-12 text-base"
+                className="h-12 text-base capitalize"
                 required
               />
             </div>
@@ -288,7 +293,7 @@ function NewProposalContent() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Provide a detailed description of the proposed work, scope, timeline, and deliverables..."
-                className="min-h-[140px] text-base resize-none"
+                className="min-h-[140px] text-base resize-none capitalize"
                 required
               />
             </div>
@@ -319,7 +324,7 @@ function NewProposalContent() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-base font-medium text-slate-700">Quotation Document (PDF recommended)</Label>
+              <Label className="text-base font-medium text-slate-700">Quotation Document (PDF, Word, or Excel)</Label>
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
                 <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-500 mb-3">Click to upload or drag and drop</p>

@@ -29,15 +29,15 @@ export default async function ProposalDetailPage({ params }: PageProps) {
 
   const { data: proposal } = await supabase
     .from('proposals')
-    .select('*,contractors(company_name,cac_number,contact_person,email,phone)')
+    .select('*,contractors(company_name,cac_number,contact_person,email)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   if (!proposal) notFound()
-  const prop = proposal as unknown as Proposal & { contractors: { company_name: string; cac_number: string; contact_person: string | null; email: string; phone: string | null } }
+  const prop = proposal as unknown as Proposal & { contractors: { company_name: string; cac_number: string; contact_person: string | null; email: string } }
 
   // Access control
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).single()
+    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (!contractor || contractor.id !== prop.contractor_id) redirect('/proposals')
   }
@@ -202,7 +202,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                           : '??'
                       return (
                         <div key={c.id} className="flex gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
+                          <div className="w-9 h-9 rounded-sm bg-slate-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-600">
                             {authorInitials}
                           </div>
                           <div className="flex-1 bg-slate-50 rounded-xl p-3">
@@ -266,7 +266,6 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                 <p><span className="text-slate-500">Company:</span> <span className="font-medium">{contractor.company_name}</span></p>
                 <p><span className="text-slate-500">Contact:</span> <span className="font-medium">{contractor.contact_person ?? '—'}</span></p>
                 <p><span className="text-slate-500">Email:</span> <span className="font-medium">{contractor.email}</span></p>
-                <p><span className="text-slate-500">Phone:</span> <span className="font-medium">{contractor.phone ?? '—'}</span></p>
                 <Button asChild variant="outline" size="sm" className="w-full mt-2">
                   <Link href={`/contractors/${prop.contractor_id}`}>View Full Profile</Link>
                 </Button>

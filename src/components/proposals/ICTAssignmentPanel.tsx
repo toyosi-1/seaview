@@ -38,8 +38,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         .select('id')
         .eq('role', supervisorRole)
         .eq('is_active', true)
-        .limit(1)
-        .single()
+        .maybeSingle()
       const supervisor = supervisorRaw as unknown as { id: string } | null
       if (!supervisor) throw new Error(`No active ${ROLE_LABELS[supervisorRole]} found. Please create one in User Management before assigning this department.`)
 
@@ -47,7 +46,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         .from('contracts')
         .select('id')
         .eq('proposal_id', proposal.id)
-        .single()
+        .maybeSingle()
       const contract = contractRaw as unknown as { id: string } | null
       if (!contract) throw new Error('Contract not found for this quotation')
 
@@ -58,13 +57,13 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
           project_supervisor_id: supervisor?.id ?? null,
           department_assigned_at: new Date().toISOString(),
           department_assigned_by: profile.id,
-        } as never)
+        })
         .eq('id', contract.id)
       if (contractError) throw contractError
 
       const { error: proposalError } = await supabase
         .from('proposals')
-        .update({ status: 'approved', current_stage: 'approved' } as never)
+        .update({ status: 'approved', current_stage: 'approved' })
         .eq('id', proposal.id)
       if (proposalError) throw proposalError
 
@@ -72,7 +71,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
       if (proposal.tender_id) {
         await supabase
           .from('tenders')
-          .update({ status: 'awarded' } as never)
+          .update({ status: 'awarded' })
           .eq('id', proposal.tender_id)
       }
 
@@ -82,7 +81,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         stage: 'approved',
         action: `Assigned to ${DEPARTMENT_LABELS[department as Department]} Department`,
         note: `Project Supervisor: ${supervisorRole ? supervisorRole : 'N/A'}`,
-      } as never)
+      })
 
       // Audit log
       await logAudit({
@@ -97,7 +96,7 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
 
       // Notify contractor of approval
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', proposal.contractor_id).single()
+        .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
       const contractor = contractorRaw as unknown as { user_id: string } | null
       if (contractor) {
         await notify({

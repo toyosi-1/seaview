@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Building2, Phone, Mail, MapPin, Landmark, CreditCard, FileText, ExternalLink } from 'lucide-react'
+import { Building2, Mail, Landmark, CreditCard, FileText, ExternalLink } from 'lucide-react'
 import { CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
 import type { Profile, Contractor, ContractorDocument, ContractorStatus } from '@/types/database'
@@ -14,11 +14,11 @@ export default async function ContractorProfilePage() {
   const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   if (!profile || (profile as Profile).role !== 'contractor') redirect('/dashboard')
 
   const { data: contractor } = await supabase
-    .from('contractors').select('*').eq('user_id', user.id).single()
+    .from('contractors').select('*').eq('user_id', user.id).maybeSingle()
 
   if (!contractor) {
     return (
@@ -75,9 +75,7 @@ export default async function ContractorProfilePage() {
           <CardContent className="space-y-4">
             {infoItem(<FileText className="w-4 h-4 text-slate-500" />, 'CAC Registration Number', c.cac_number)}
             {infoItem(<FileText className="w-4 h-4 text-slate-500" />, 'TIN Number', c.tin_number)}
-            {infoItem(<Phone className="w-4 h-4 text-slate-500" />, 'Phone Number', c.phone)}
             {infoItem(<Mail className="w-4 h-4 text-slate-500" />, 'Email Address', c.email)}
-            {infoItem(<MapPin className="w-4 h-4 text-slate-500" />, 'Address', c.address)}
             {infoItem(<Building2 className="w-4 h-4 text-slate-500" />, 'Contact Person', c.contact_person)}
           </CardContent>
         </Card>

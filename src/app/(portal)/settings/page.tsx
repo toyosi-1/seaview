@@ -15,7 +15,7 @@ export default async function SettingsPage() {
 
   let contractor: Contractor | null = null
   if (p.role === 'contractor') {
-    const { data: c } = await supabase.from('contractors').select('*').eq('user_id', user.id).single()
+    const { data: c } = await supabase.from('contractors').select('*').eq('user_id', user.id).maybeSingle()
     contractor = c as unknown as Contractor | null
   }
 
@@ -29,12 +29,12 @@ export default async function SettingsPage() {
       {/* Profile Info */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center">
+          <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center">
             <User className="w-5 h-5 text-spl-blue" />
           </div>
           <div>
             <h2 className="font-semibold text-slate-800">Personal Information</h2>
-            <p className="text-sm text-slate-500">Update your name and contact details</p>
+            <p className="text-sm text-slate-500">Update your contact details</p>
           </div>
         </div>
         <ProfileEditForm profile={p} />
@@ -44,7 +44,7 @@ export default async function SettingsPage() {
       {p.role === 'contractor' && contractor && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-spl-success-bg flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-spl-success-bg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-spl-success" />
             </div>
             <div>
@@ -56,11 +56,11 @@ export default async function SettingsPage() {
         </div>
       )}
 
-      {/* Digital Signature — staff only (used on award letters & approval docs) */}
-      {p.role !== 'contractor' && (
+      {/* Digital Signature — MD only (used on contract award letters) */}
+      {p.role === 'md' && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-indigo-50 flex items-center justify-center">
               <PenTool className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
@@ -75,7 +75,7 @@ export default async function SettingsPage() {
       {/* Password Change */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-spl-warning-bg flex items-center justify-center">
+          <div className="w-10 h-10 rounded-sm bg-spl-warning-bg flex items-center justify-center">
             <Lock className="w-5 h-5 text-spl-warning" />
           </div>
           <div>

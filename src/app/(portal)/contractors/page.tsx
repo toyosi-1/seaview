@@ -50,7 +50,7 @@ export default async function ContractorsPage() {
                   href={`/contractors/${c.id}`}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                 >
-                  <div className="w-12 h-12 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-6 h-6 text-spl-blue" />
                   </div>
                   <div className="flex-1 min-w-0">

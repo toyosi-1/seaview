@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { PaymentActions } from './PaymentActions'
-import { ArrowLeft, Banknote, FileText, Download } from 'lucide-react'
+import { ArrowLeft, FileText, Download } from 'lucide-react'
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/constants'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
 import type { Profile, Payment, PaymentStatus, PaymentDocument } from '@/types/database'
@@ -29,7 +29,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
     .from('payments')
     .select('*,contractors(company_name,bank_name,account_number,account_name),contracts(title,contract_number)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   if (!payment) notFound()
 
   const { data: docs } = await supabase

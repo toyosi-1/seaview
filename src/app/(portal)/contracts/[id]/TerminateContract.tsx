@@ -37,7 +37,7 @@ export function TerminateContract({ contract, profile }: TerminateContractProps)
 
       const { error } = await supabase
         .from('contracts')
-        .update({ status: 'terminated' } as never)
+        .update({ status: 'terminated' })
         .eq('id', contract.id)
       if (error) throw error
 
@@ -54,7 +54,7 @@ export function TerminateContract({ contract, profile }: TerminateContractProps)
 
       // Notify contractor
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', contract.contractor_id).single()
+        .from('contractors').select('user_id').eq('id', contract.contractor_id).maybeSingle()
       const contractor = contractorRaw as unknown as { user_id: string } | null
       if (contractor) {
         await notify({

@@ -17,9 +17,9 @@ import {
   ArrowRight,
   Clock,
 } from 'lucide-react'
-import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS, ROLE_LABELS } from '@/lib/constants'
+import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils/format'
-import type { Profile, Proposal, ProposalStatus, CompletionReport, ContractorStatus, UserRole } from '@/types/database'
+import type { Profile, Proposal, ProposalStatus, CompletionReport, UserRole } from '@/types/database'
 
 export default async function DashboardPage() {
   const { supabase, user, profile } = await getSessionProfile()
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
 
   if (isContractor) {
     const { data: contractorRaw } = await supabase
-      .from('contractors').select('id').eq('user_id', user.id).single()
+      .from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
 
     if (contractor) {
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       supabase.from('contracts').select('*', { count: 'exact', head: true }),
       supabase.from('completion_reports').select('*', { count: 'exact', head: true })
         .in('status', ['submitted', 'supervisor_review', 'md_verification', 'audit_review', 'accounts_review']),
-      supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('completion_reports').select('*', { count: 'exact', head: true }).in('status', ['accounts_review', 'payment_pending']),
       supabase.from('contractors').select('*', { count: 'exact', head: true }),
       supabase.from('proposals').select('*,contractors(company_name)').order('updated_at', { ascending: false }).limit(8),
     ])
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
                   href={`/completions/${cr.id}`}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                     <ClipboardList className="w-5 h-5 text-spl-blue" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
                           href={`/proposals/${proposal.id}`}
                           className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                         >
-                          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                             <FileText className="w-5 h-5 text-spl-blue" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -359,7 +359,7 @@ export default async function DashboardPage() {
                       href={`/proposals/${proposal.id}`}
                       className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-spl-blue" />
                       </div>
                       <div className="flex-1 min-w-0">

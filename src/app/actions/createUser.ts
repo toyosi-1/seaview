@@ -29,7 +29,7 @@ export async function createStaffUser(payload: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   const p = profile as unknown as { role: UserRole } | null
   if (!p || p.role !== 'ict_admin') return { error: 'Access denied. ICT Admin only.' }
 
@@ -55,7 +55,11 @@ export async function createStaffUser(payload: {
     email: payload.email,
     role: payload.role,
     is_active: true,
-  } as never)
+    phone: null,
+    department: null,
+    signature_url: null,
+    avatar_url: null,
+  })
 
   if (profileError) {
     // Rollback: delete the auth user if profile creation failed

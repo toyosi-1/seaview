@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { ContractorActions } from './ContractorActions'
 import {
-  ArrowLeft, Building2, Phone, Mail, MapPin, Landmark, CreditCard, FileText, Calendar
+  ArrowLeft, Building2, Mail, Landmark, CreditCard, FileText, Calendar
 } from 'lucide-react'
 import { CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, INTERNAL_ROLES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
@@ -22,7 +21,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
   if (!profile) redirect('/login')
   const p = profile as Profile
 
-  const { data: contractor } = await supabase.from('contractors').select('*').eq('id', id).single()
+  const { data: contractor } = await supabase.from('contractors').select('*').eq('id', id).maybeSingle()
   if (!contractor) notFound()
   const c = contractor as Contractor
 
@@ -79,9 +78,7 @@ export default async function ContractorDetailPage({ params }: PageProps) {
           <CardContent className="space-y-4">
             {infoRow(<FileText className="w-4 h-4 text-slate-500" />, 'CAC Number', c.cac_number)}
             {infoRow(<FileText className="w-4 h-4 text-slate-500" />, 'TIN Number', c.tin_number)}
-            {infoRow(<Phone className="w-4 h-4 text-slate-500" />, 'Phone', c.phone)}
             {infoRow(<Mail className="w-4 h-4 text-slate-500" />, 'Email', c.email)}
-            {infoRow(<MapPin className="w-4 h-4 text-slate-500" />, 'Address', c.address)}
             {infoRow(<Calendar className="w-4 h-4 text-slate-500" />, 'Contact Person', c.contact_person)}
           </CardContent>
         </Card>

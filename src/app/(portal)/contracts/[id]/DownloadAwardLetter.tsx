@@ -29,7 +29,7 @@ export function DownloadAwardLetter(props: DownloadAwardLetterProps) {
       const { downloadAwardLetter } = await import('@/components/pdf/AwardLetterPDF')
       await downloadAwardLetter(props)
       toast.success('Award letter downloaded successfully')
-    } catch (err) {
+    } catch {
       toast.error('Failed to generate PDF')
     } finally {
       setLoading(false)

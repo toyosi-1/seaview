@@ -13,13 +13,22 @@ export default async function UsersPage() {
   const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   if (!profile || (profile as Profile).role !== 'ict_admin') redirect('/dashboard')
 
   const { data: users } = await supabase
     .from('profiles')
     .select('*')
     .order('created_at', { ascending: false })
+
+  // Sort so MD appears first, then other staff by role, then contractors
+  const sortedUsers = (users as Profile[] ?? []).sort((a, b) => {
+    const roleOrder: Record<string, number> = { md: 0 }
+    const aOrder = roleOrder[a.role] ?? 1
+    const bOrder = roleOrder[b.role] ?? 1
+    if (aOrder !== bOrder) return aOrder - bOrder
+    return 0
+  })
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -35,7 +44,7 @@ export default async function UsersPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
             <Users className="w-5 h-5" />
-            All Users ({users?.length ?? 0})
+            All Users ({sortedUsers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -46,12 +55,12 @@ export default async function UsersPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {(users as Profile[]).map(u => (
+              {sortedUsers.map(u => (
                 <div
                   key={u.id}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:bg-slate-50 hover:border-slate-100 transition-colors"
                 >
-                  <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0 text-spl-blue-dark font-bold text-sm">
+                  <div className="w-11 h-11 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0 text-spl-blue-dark font-bold text-sm">
                     {(u.full_name ?? u.email).slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">

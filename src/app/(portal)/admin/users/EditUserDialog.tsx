@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateUser } from '@/app/actions/updateUser'
+import { updateUser, deleteUser } from '@/app/actions/updateUser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Pencil, Loader2, UserCog } from 'lucide-react'
+import { Pencil, Loader2, UserCog, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ROLE_LABELS, STAFF_ROLES } from '@/lib/constants'
 import type { Profile, UserRole } from '@/types/database'
@@ -22,12 +22,13 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [fullName, setFullName] = useState(user.full_name ?? '')
   const [email, setEmail] = useState(user.email)
   const [role, setRole] = useState<UserRole>(user.role)
   const [isActive, setIsActive] = useState(user.is_active)
 
   const isSelf = user.id === currentUserId
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   async function handleSave() {
     if (!email) {
@@ -38,7 +39,6 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
     try {
       const result = await updateUser({
         userId: user.id,
-        fullName: fullName || null,
         email,
         role,
         isActive,
@@ -78,10 +78,6 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 col-span-2">
-                <Label className="text-base font-medium">Full Name</Label>
-                <Input value={fullName} onChange={e => setFullName(e.target.value)} className="h-11" />
-              </div>
               <div className="space-y-2 col-span-2">
                 <Label className="text-base font-medium">Email Address *</Label>
                 <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="h-11" />
@@ -129,6 +125,54 @@ export function EditUserDialog({ user, currentUserId }: EditUserDialogProps) {
                 {loading ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-spl-danger hover:text-red-700 hover:bg-red-50 h-9 px-3"
+        type="button"
+        onClick={() => setDeleteOpen(true)}
+        disabled={isSelf}
+      >
+        <Trash2 className="w-4 h-4 mr-1" />
+        Delete
+      </Button>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-spl-danger">Delete User</DialogTitle>
+            <DialogDescription className="text-base mt-2">
+              Are you sure you want to delete <strong>{user.full_name ?? user.email}</strong>? This will permanently remove their account and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" onClick={() => setDeleteOpen(false)} className="flex-1 h-11" disabled={deleteLoading}>Cancel</Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                setDeleteLoading(true)
+                try {
+                  const result = await deleteUser(user.id)
+                  if (result.error) throw new Error(result.error)
+                  toast.success('User deleted successfully')
+                  setDeleteOpen(false)
+                  router.refresh()
+                } catch (err: unknown) {
+                  toast.error(err instanceof Error ? err.message : 'Failed to delete user')
+                } finally {
+                  setDeleteLoading(false)
+                }
+              }}
+              disabled={deleteLoading}
+              className="flex-1 h-11 bg-spl-danger hover:bg-spl-danger-dark text-white"
+            >
+              {deleteLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Trash2 className="w-5 h-5 mr-2" />}
+              {deleteLoading ? 'Deleting...' : 'Delete User'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

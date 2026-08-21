@@ -16,7 +16,7 @@ export default async function ContractsPage() {
   let contracts: Contract[] = []
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).single()
+    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
       const { data } = await supabase
@@ -66,7 +66,7 @@ export default async function ContractsPage() {
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
                     <Link href={`/contracts/${c.id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-full bg-spl-success-bg flex items-center justify-center flex-shrink-0">
+                      <div className="w-11 h-11 rounded-sm bg-spl-success-bg flex items-center justify-center flex-shrink-0">
                         <Briefcase className="w-5 h-5 text-spl-success" />
                       </div>
                       <div className="flex-1 min-w-0">

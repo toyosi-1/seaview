@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Briefcase, CalendarDays, FileText, User, Plus } from 'lucide-react'
-import { TENDER_STATUS_LABELS, TENDER_STATUS_COLORS } from '@/lib/constants'
+import { TENDER_STATUS_LABELS, TENDER_STATUS_COLORS, ROLE_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
 import type { Profile, Tender, TenderStatus } from '@/types/database'
 
@@ -18,12 +18,12 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
 
   const { data: tenderRaw } = await supabase
     .from('tenders')
-    .select('*,profiles!tenders_posted_by_fkey(full_name)')
+    .select('*,profiles!tenders_posted_by_fkey(full_name,role)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
 
   if (!tenderRaw) notFound()
-  const tender = tenderRaw as unknown as Tender & { profiles?: { full_name: string } }
+  const tender = tenderRaw as unknown as Tender & { profiles?: { full_name: string | null; role: string | null } }
 
   const isContractor = p.role === 'contractor'
   const isContractOfficer = p.role === 'contract_officer'
@@ -36,7 +36,7 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
       .from('contractors')
       .select('id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
       const { count } = await supabase
@@ -100,7 +100,11 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1">
               <User className="w-3.5 h-3.5" /> Posted By
             </p>
-            <p className="text-xl font-bold text-slate-800 mt-1">{tender.profiles?.full_name ?? '—'}</p>
+            <p className="text-xl font-bold text-slate-800 mt-1">{
+              tender.profiles?.full_name
+              ?? (tender.profiles?.role ? ROLE_LABELS[tender.profiles.role as keyof typeof ROLE_LABELS] : null)
+              ?? '—'
+            }</p>
           </CardContent>
         </Card>
       </div>

@@ -31,7 +31,7 @@ export default function NewCompletionPage() {
   useEffect(() => {
     if (!contractId) return
     const supabase = createClient()
-    supabase.from('contracts').select('*').eq('id', contractId).single().then(({ data }) => {
+    supabase.from('contracts').select('*').eq('id', contractId).maybeSingle().then(({ data }) => {
       if (data) setContract(data as unknown as Contract)
     })
   }, [contractId])
@@ -53,7 +53,7 @@ export default function NewCompletionPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).single()
+      const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
       if (!contractorRaw) throw new Error('Contractor profile not found')
       const contractor = contractorRaw as unknown as { id: string }
 
@@ -65,10 +65,25 @@ export default function NewCompletionPage() {
           title: title.trim(),
           description: description.trim(),
           status: 'supervisor_review',
-        } as never)
+          submitted_at: new Date().toISOString(),
+          supervisor_id: null,
+          supervisor_reviewed_at: null,
+          supervisor_reviewed_by: null,
+          supervisor_notes: null,
+          correction_requested: false,
+          md_verified_at: null,
+          md_verified_by: null,
+          audit_reviewed_at: null,
+          audit_reviewed_by: null,
+          audit_comment: null,
+          accounts_reviewed_at: null,
+          accounts_reviewed_by: null,
+          rejection_reason: null,
+        })
         .select()
-        .single()
+        .maybeSingle()
       if (error) throw error
+      if (!crRaw) throw new Error('Failed to create completion report')
       const cr = crRaw as unknown as { id: string }
 
       const uploadFile = async (file: File, type: string, index = 0) => {
@@ -84,7 +99,7 @@ export default function NewCompletionPage() {
           file_url: publicUrl,
           file_size: compressed.size,
           uploaded_by: user.id,
-        } as never)
+        })
       }
 
       const uploads: Promise<void>[] = []
@@ -105,7 +120,7 @@ export default function NewCompletionPage() {
 
       // Notify project supervisor
       const { data: contractRaw } = await supabase
-        .from('contracts').select('project_supervisor_id').eq('id', contractId).single()
+        .from('contracts').select('project_supervisor_id').eq('id', contractId).maybeSingle()
       const typedContract2 = contractRaw as unknown as { project_supervisor_id: string | null } | null
       if (typedContract2?.project_supervisor_id) {
         await notify({
@@ -148,11 +163,11 @@ export default function NewCompletionPage() {
           <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label className="text-base font-medium">Report Title *</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Warehouse Construction – Completion Report" className="h-12 text-base" required />
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Warehouse Construction – Completion Report" className="h-12 text-base capitalize" required />
             </div>
             <div className="space-y-2">
               <Label className="text-base font-medium">Description of Work Completed *</Label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what was accomplished, key milestones achieved, and any relevant details..." className="min-h-[120px] text-base resize-none" required />
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what was accomplished, key milestones achieved, and any relevant details..." className="min-h-[120px] text-base resize-none capitalize" required />
             </div>
           </CardContent>
         </Card>

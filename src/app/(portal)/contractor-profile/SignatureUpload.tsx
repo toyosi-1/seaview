@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,7 +40,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ signature_url: `${publicUrl}?t=${Date.now()}` } as never)
+        .update({ signature_url: `${publicUrl}?t=${Date.now()}` })
         .eq('id', profile.id)
       if (updateError) throw updateError
 
@@ -106,10 +107,13 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
             <p className="text-sm font-medium">Signature on file</p>
           </div>
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block">
-            <img
+            <Image
               src={profile.signature_url}
               alt="Your signature"
+              width={160}
+              height={80}
               className="max-h-20 object-contain"
+              unoptimized
             />
           </div>
           <p className="text-xs text-slate-500">Draw or upload a new signature below to replace your current one.</p>
@@ -188,6 +192,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
                   backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
                 }}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="Cleaned signature preview" className="max-h-24 object-contain" />
               </div>
               <div className="flex gap-2">

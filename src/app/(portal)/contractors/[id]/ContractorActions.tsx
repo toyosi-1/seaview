@@ -37,7 +37,7 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
 
     const { error } = await supabase
       .from('contractors')
-      .update(update as never)
+      .update(update as Partial<Contractor>)
       .eq('id', contractor.id)
     if (error) {
       toast.error('Failed to update contractor status')

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, FileText } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
-import { DEPARTMENT_LABELS } from '@/lib/constants'
+import { DEPARTMENT_LABELS, ROLE_LABELS, DEPARTMENT_HEAD_ROLE } from '@/lib/constants'
 import { DownloadAwardLetter } from './DownloadAwardLetter'
 import { TerminateContract } from './TerminateContract'
 import { CompletionPeriodEditor } from './CompletionPeriodEditor'
@@ -24,15 +24,15 @@ export default async function ContractDetailPage({ params }: PageProps) {
 
   const { data: contract } = await supabase
     .from('contracts')
-    .select('*,contractors(company_name,contact_person,email,phone,address,bank_name,account_number,account_name),proposals(proposal_number,description,submitted_at),project_supervisor:profiles!contracts_project_supervisor_id_fkey(full_name)')
+    .select('*,contractors(company_name,contact_person,email,phone,address,bank_name,account_number,account_name),proposals(proposal_number,description,submitted_at),project_supervisor:profiles!contracts_project_supervisor_id_fkey(full_name,role)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   if (!contract) notFound()
 
   const c = contract as unknown as Contract & {
     contractors: { company_name: string; contact_person: string | null; email: string; phone: string | null; address: string | null; bank_name: string; account_number: string; account_name: string }
     proposals: { proposal_number: string; description: string; submitted_at: string }
-    project_supervisor: { full_name: string } | null
+    project_supervisor: { full_name: string | null; role: UserRole } | null
   }
 
   const { data: mdProfileRaw } = await supabase
@@ -40,9 +40,21 @@ export default async function ContractDetailPage({ params }: PageProps) {
     .select('full_name,signature_url,role')
     .eq('role', 'md')
     .eq('is_active', true)
-    .limit(1)
-    .single()
+    .maybeSingle()
   const mdProfile = mdProfileRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
+
+  // Fallback: if a department is assigned but no supervisor is stored (legacy data),
+  // resolve the current department head's role/name dynamically.
+  const supervisorRole = c.responsible_department ? DEPARTMENT_HEAD_ROLE[c.responsible_department] : null
+  const { data: departmentHeadRaw } = supervisorRole
+    ? await supabase
+        .from('profiles')
+        .select('full_name,role')
+        .eq('role', supervisorRole)
+        .eq('is_active', true)
+        .maybeSingle()
+    : { data: null }
+  const departmentHead = departmentHeadRaw as unknown as { full_name: string | null; role: UserRole } | null
 
   const INTERNAL_EDIT_ROLES: UserRole[] = ['md', 'head_of_procurement', 'ict_admin']
 
@@ -123,7 +135,13 @@ export default async function ContractDetailPage({ params }: PageProps) {
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Project Supervisor</p>
-                      <p className="font-semibold text-slate-800 mt-0.5">{c.project_supervisor?.full_name ?? '—'}</p>
+                      <p className="font-semibold text-slate-800 mt-0.5">
+                        {c.project_supervisor?.full_name
+                          ?? (c.project_supervisor ? ROLE_LABELS[c.project_supervisor.role] : null)
+                          ?? departmentHead?.full_name
+                          ?? (departmentHead ? ROLE_LABELS[departmentHead.role] : null)
+                          ?? '—'}
+                      </p>
                     </div>
                   </div>
                 </>

@@ -44,7 +44,7 @@ export function useNotifications(userId: string | undefined) {
   async function markAllRead() {
     if (!userId) return
     const supabase = createClient()
-    await supabase.from('notifications').update({ is_read: true } as never).eq('user_id', userId).eq('is_read', false)
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false)
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
     setUnreadCount(0)
   }

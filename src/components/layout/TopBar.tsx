@@ -27,8 +27,17 @@ export function TopBar({ profile }: { profile: Profile }) {
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [contractorId, setContractorId] = useState<string | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (profile.role !== 'contractor') return
+    const supabase = createClient()
+    supabase.from('contractors').select('id').eq('user_id', profile.id).maybeSingle().then(({ data }) => {
+      if (data) setContractorId((data as { id: string }).id)
+    })
+  }, [profile.id, profile.role])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -51,13 +60,34 @@ export function TopBar({ profile }: { profile: Profile }) {
       const supabase = createClient()
       const q = query.trim()
       const found: SearchResult[] = []
+      const isContractor = profile.role === 'contractor'
+
+      const contractorsQuery = isContractor
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase.from('contractors').select('id,company_name,cac_number,tin_number').or(`company_name.ilike.%${q}%,cac_number.ilike.%${q}%,tin_number.ilike.%${q}%`).limit(5)
+
+      let proposalsQuery = supabase.from('proposals').select('id,proposal_number,title').or(`proposal_number.ilike.%${q}%,title.ilike.%${q}%`)
+      if (isContractor && contractorId) proposalsQuery = proposalsQuery.eq('contractor_id', contractorId)
+      proposalsQuery = proposalsQuery.limit(5)
+
+      let contractsQuery = supabase.from('contracts').select('id,contract_number,title').ilike('contract_number', `%${q}%`)
+      if (isContractor && contractorId) contractsQuery = contractsQuery.eq('contractor_id', contractorId)
+      contractsQuery = contractsQuery.limit(5)
+
+      const paymentsQuery = isContractor
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase.from('payments').select('id,payment_number').ilike('payment_number', `%${q}%`).limit(5)
+
+      const internalProcurementQuery = isContractor
+        ? Promise.resolve({ data: [] as unknown[] })
+        : supabase.from('internal_procurement_requests').select('id,request_number,item_description').or(`request_number.ilike.%${q}%,item_description.ilike.%${q}%`).limit(5)
 
       const [{ data: rawContractors }, { data: rawProposals }, { data: rawContracts }, { data: rawPayments }, { data: rawInternalProcurement }] = await Promise.all([
-        supabase.from('contractors').select('id,company_name,cac_number,tin_number').or(`company_name.ilike.%${q}%,cac_number.ilike.%${q}%,tin_number.ilike.%${q}%`).limit(5),
-        supabase.from('proposals').select('id,proposal_number,title').or(`proposal_number.ilike.%${q}%,title.ilike.%${q}%`).limit(5),
-        supabase.from('contracts').select('id,contract_number,title').ilike('contract_number', `%${q}%`).limit(5),
-        supabase.from('payments').select('id,payment_number').ilike('payment_number', `%${q}%`).limit(5),
-        supabase.from('internal_procurement_requests').select('id,request_number,item_description').or(`request_number.ilike.%${q}%,item_description.ilike.%${q}%`).limit(5),
+        contractorsQuery,
+        proposalsQuery,
+        contractsQuery,
+        paymentsQuery,
+        internalProcurementQuery,
       ])
 
       const contractors = (rawContractors ?? []) as unknown as { id: string; company_name: string; cac_number: string; tin_number: string }[]
@@ -76,7 +106,7 @@ export function TopBar({ profile }: { profile: Profile }) {
       setSearching(false)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, contractorId, profile.role])
 
   return (
     <header className="h-16 bg-white border-b border-spl-border flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-14 lg:pl-6">
@@ -139,7 +169,7 @@ export function TopBar({ profile }: { profile: Profile }) {
         >
           <Bell className="w-5 h-5 text-slate-600" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-spl-danger text-white text-xs font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-spl-danger text-white text-xs font-bold rounded-sm flex items-center justify-center">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

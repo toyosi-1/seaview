@@ -18,9 +18,30 @@ export async function notify(params: NotifyParams) {
       type: params.type,
       title: params.title,
       message: params.message,
+      is_read: false,
       reference_id: params.referenceId ?? null,
       reference_type: params.referenceType ?? null,
-    } as never)
+    })
+
+    // Also trigger email notification via edge function
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-email-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          user_id: params.userId,
+          type: params.type,
+          title: params.title,
+          message: params.message,
+        }),
+      })
+    } catch {
+      // Email is best-effort — don't fail the notification
+    }
   } catch {
     // Non-blocking — notifications are best-effort
   }
@@ -51,7 +72,10 @@ export async function logAudit(params: AuditParams) {
       entity_id: params.entityId ?? null,
       previous_status: params.previousStatus ?? null,
       new_status: params.newStatus ?? null,
-    } as never)
+      details: null,
+      ip_address: null,
+      user_agent: null,
+    })
   } catch {
     // Non-blocking — audit logs are best-effort
   }
@@ -77,7 +101,7 @@ export async function getStaffByRole(role: string): Promise<{ id: string; full_n
     const { data } = await supabase
       .from('profiles')
       .select('id,full_name')
-      .eq('role', role)
+      .eq('role', role as UserRole)
       .eq('is_active', true)
     return (data ?? []) as unknown as { id: string; full_name: string }[]
   } catch {

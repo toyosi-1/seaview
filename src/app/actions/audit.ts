@@ -25,5 +25,7 @@ export async function logAuditAction(entry: AuditEntry) {
     previous_status: entry.previousStatus ?? null,
     new_status: entry.newStatus ?? null,
     details: entry.details ?? null,
-  } as never)
+    ip_address: null,
+    user_agent: null,
+  })
 }

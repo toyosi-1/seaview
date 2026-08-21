@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, Plus, ArrowRight } from 'lucide-react'
-import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS, STAFF_ROLES } from '@/lib/constants'
+import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS, STAFF_ROLES, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
-import type { Profile, InternalProcurementRequest, InternalProcurementStatus } from '@/types/database'
+import type { Profile, InternalProcurementRequest, InternalProcurementStatus, UserRole } from '@/types/database'
 
 export default async function InternalProcurementPage() {
   const { supabase, user, profile } = await getSessionProfile()
@@ -20,9 +20,9 @@ export default async function InternalProcurementPage() {
 
   const { data } = await supabase
     .from('internal_procurement_requests')
-    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name)')
+    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,role)')
     .order('created_at', { ascending: false })
-  const requests = (data ?? []) as unknown as (InternalProcurementRequest & { profiles?: { full_name: string } })[]
+  const requests = (data ?? []) as unknown as (InternalProcurementRequest & { profiles?: { full_name: string | null; role: UserRole } })[]
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -46,7 +46,7 @@ export default async function InternalProcurementPage() {
           const count = requests.filter(r => r.status === key).length
           if (count === 0) return null
           return (
-            <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${INTERNAL_PROCUREMENT_STATUS_COLORS[key as InternalProcurementStatus]}`}>
+            <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${INTERNAL_PROCUREMENT_STATUS_COLORS[key as InternalProcurementStatus]}`}>
               {label} <span className="font-bold">{count}</span>
             </span>
           )
@@ -78,14 +78,14 @@ export default async function InternalProcurementPage() {
                     href={`/internal-procurement/${req.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                       <ShoppingCart className="w-5 h-5 text-spl-blue" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-base truncate">{req.item_description}</p>
                       <p className="text-sm text-slate-500 truncate">
                         {req.request_number} · {DEPARTMENT_LABELS[req.department]}
-                        {req.profiles && ` · ${req.profiles.full_name ?? 'Staff'}`}
+                        {req.profiles && ` · ${req.profiles.full_name ?? ROLE_LABELS[req.profiles.role]}`}
                         {' · '}{formatDate(req.created_at)}
                       </p>
                     </div>

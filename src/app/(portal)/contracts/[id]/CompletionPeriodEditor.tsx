@@ -25,7 +25,7 @@ export function CompletionPeriodEditor({ contractId, completionPeriod, editable 
     const supabase = createClient()
     const { error } = await supabase
       .from('contracts')
-      .update({ completion_period: value.trim() || null } as never)
+      .update({ completion_period: value.trim() || null })
       .eq('id', contractId)
     setLoading(false)
     if (error) {

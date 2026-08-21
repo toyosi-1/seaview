@@ -33,7 +33,7 @@ function getActions(status: CompletionStatus, role: string, isSupervisor: boolea
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'accounts_review' && role === 'head_of_accounts') return [
-    { label: 'Approve for Payment', nextStatus: 'payment_pending', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    { label: 'Payment Made', nextStatus: 'payment_completed', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   return []
@@ -82,18 +82,18 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
         update.accounts_reviewed_by = profile.id
         if (selected.nextStatus === 'rejected') update.rejection_reason = comment
 
-        // Create payment record when approving
-        if (selected.nextStatus === 'payment_pending') {
+        // When payment is made, create completed payment record and close out contract
+        if (selected.nextStatus === 'payment_completed') {
           const { data: contractor } = await supabase
             .from('contractors')
             .select('bank_name,account_number,account_name')
             .eq('id', completion.contractor_id)
-            .single()
+            .maybeSingle()
 
           if (contractor) {
             const typedContractor = contractor as unknown as { bank_name: string; account_number: string; account_name: string }
             const { data: contractRaw } = await supabase
-              .from('contracts').select('contract_value').eq('id', completion.contract_id).single()
+              .from('contracts').select('contract_value').eq('id', completion.contract_id).maybeSingle()
             const typedContract = contractRaw as unknown as { contract_value: number } | null
 
             await supabase.from('payments').insert({
@@ -104,15 +104,28 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
               bank_name: typedContractor.bank_name,
               account_number: typedContractor.account_number,
               account_name: typedContractor.account_name,
-              payment_number: '',
-            } as never)
+              tax_deduction: 0,
+              net_amount: typedContract?.contract_value ?? 0,
+              status: 'completed',
+              approved_by: profile.id,
+              approved_at: now,
+              payment_date: now,
+              payment_reference: null,
+              notes: null,
+            })
           }
+
+          // Close out the contract
+          await supabase
+            .from('contracts')
+            .update({ status: 'completed' })
+            .eq('id', completion.contract_id)
         }
       }
 
       const { error } = await supabase
         .from('completion_reports')
-        .update(update as never)
+        .update(update as Partial<CompletionReport>)
         .eq('id', completion.id)
       if (error) throw error
 
@@ -129,15 +142,18 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
 
       // Notify contractor
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', completion.contractor_id).single()
+        .from('contractors').select('user_id').eq('id', completion.contractor_id).maybeSingle()
       const contractor = contractorRaw as unknown as { user_id: string } | null
       if (contractor) {
         const isReject = selected.nextStatus === 'rejected'
+        const isPaymentDone = selected.nextStatus === 'payment_completed'
         await notify({
           userId: contractor.user_id,
-          type: isReject ? 'audit_rejected' : 'audit_approved',
-          title: isReject ? 'Completion Report Rejected' : 'Completion Report Updated',
-          message: `Your completion report "${completion.title}" has been ${selected.label.toLowerCase()}.`,
+          type: isReject ? 'audit_rejected' : isPaymentDone ? 'payment_completed' : 'audit_approved',
+          title: isReject ? 'Completion Report Rejected' : isPaymentDone ? 'Payment Completed' : 'Completion Report Updated',
+          message: isPaymentDone
+            ? `Your completion report "${completion.title}" has been approved and payment has been made to your account.`
+            : `Your completion report "${completion.title}" has been ${selected.label.toLowerCase()}.`,
           referenceId: completion.id,
           referenceType: 'completion',
         })
@@ -148,7 +164,6 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
         const nextRole = selected.nextStatus === 'md_verification' ? 'md'
           : selected.nextStatus === 'audit_review' ? 'head_of_audit'
           : selected.nextStatus === 'accounts_review' ? 'head_of_accounts'
-          : selected.nextStatus === 'payment_pending' ? 'head_of_accounts'
           : null
         if (nextRole) {
           const staff = await getStaffByRole(nextRole)

@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
       .from('profiles')
       .select('is_active')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (profile && !(profile as { is_active: boolean }).is_active) {
       await supabase.auth.signOut()

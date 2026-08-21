@@ -42,12 +42,12 @@ export default function NewTenderPage() {
           closing_date: closingDate ? new Date(closingDate).toISOString() : null,
           status: 'open',
           posted_by: user.id,
-          contract_number: '',
-        } as never)
+        })
         .select()
-        .single()
+        .maybeSingle()
 
       if (error) throw error
+      if (!tenderRaw) throw new Error('Failed to create tender')
       const tender = tenderRaw as unknown as { id: string; contract_number: string }
 
       await logAudit({
@@ -96,7 +96,7 @@ export default function NewTenderPage() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="e.g. Construction of Warehouse Facility"
-                className="h-12 text-base"
+                className="h-12 text-base capitalize"
                 required
               />
             </div>
@@ -107,7 +107,7 @@ export default function NewTenderPage() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Provide a detailed description of the contract scope, deliverables, and expectations..."
-                className="min-h-[140px] text-base resize-none"
+                className="min-h-[140px] text-base resize-none capitalize"
                 required
               />
             </div>
@@ -135,7 +135,7 @@ export default function NewTenderPage() {
               value={requirements}
               onChange={e => setRequirements(e.target.value)}
               placeholder="e.g. Must have CAC registration, minimum 5 years experience, evidence of similar projects..."
-              className="min-h-[100px] text-base resize-none"
+              className="min-h-[100px] text-base resize-none capitalize"
             />
           </CardContent>
         </Card>

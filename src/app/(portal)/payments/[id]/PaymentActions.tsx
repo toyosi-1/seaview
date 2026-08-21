@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { CheckCircle, XCircle, PauseCircle, Upload, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, PauseCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Payment, Profile } from '@/types/database'
 import { notify, logAudit } from '@/lib/utils/notify'
@@ -20,7 +20,6 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
   const [notes, setNotes] = useState('')
   const [reference, setReference] = useState('')
   const [taxDeduction, setTaxDeduction] = useState('')
-  const [evidenceFiles, setEvidenceFiles] = useState<FileList | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleAction() {
@@ -31,54 +30,42 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
       const update: Record<string, unknown> = { notes }
 
       if (action === 'approve') {
+        const taxDeductionValue = parseFloat(taxDeduction || '0')
+        if (!Number.isFinite(taxDeductionValue) || taxDeductionValue < 0) {
+          throw new Error('Tax deduction must be a non-negative number')
+        }
+        if (taxDeductionValue > payment.amount) {
+          throw new Error('Tax deduction cannot exceed the payment amount')
+        }
         update.status = 'completed'
         update.approved_by = profile.id
         update.approved_at = now
         update.payment_reference = reference
         update.payment_date = now
-        update.tax_deduction = parseFloat(taxDeduction || '0')
-        update.net_amount = payment.amount - parseFloat(taxDeduction || '0')
+        update.tax_deduction = taxDeductionValue
+        update.net_amount = payment.amount - taxDeductionValue
       } else if (action === 'hold') {
         update.status = 'on_hold'
       } else if (action === 'reject') {
         update.status = 'rejected'
       }
 
-      const { error } = await supabase.from('payments').update(update as never).eq('id', payment.id)
+      const { error } = await supabase.from('payments').update(update as Partial<Payment>).eq('id', payment.id)
       if (error) throw error
 
       // When payment is approved, mark the contract and completion report as completed
       if (action === 'approve') {
         await supabase
           .from('contracts')
-          .update({ status: 'completed' } as never)
+          .update({ status: 'completed' })
           .eq('id', payment.contract_id)
 
         if (payment.completion_id) {
           await supabase
             .from('completion_reports')
-            .update({ status: 'payment_completed' } as never)
+            .update({ status: 'payment_completed' })
             .eq('id', payment.completion_id)
         }
-      }
-
-      // Upload evidence files
-      if (action === 'approve' && evidenceFiles) {
-        const uploads = Array.from(evidenceFiles).map(async (file, i) => {
-          const ext = file.name.split('.').pop()
-          const path = `payments/${payment.id}/evidence-${i}.${ext}`
-          await supabase.storage.from('documents').upload(path, file)
-          const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
-          await supabase.from('payment_documents').insert({
-            payment_id: payment.id,
-            document_type: 'transfer_evidence',
-            file_name: file.name,
-            file_url: publicUrl,
-            file_size: file.size,
-            uploaded_by: profile.id,
-          } as never)
-        })
-        await Promise.all(uploads)
       }
 
       // Audit log
@@ -94,7 +81,7 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
 
       // Notify contractor
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', payment.contractor_id).single()
+        .from('contractors').select('user_id').eq('id', payment.contractor_id).maybeSingle()
       const contractor = contractorRaw as unknown as { user_id: string } | null
       if (contractor) {
         const isCompleted = action === 'approve'
@@ -154,14 +141,10 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
                   <Label className="text-base font-medium">Tax Deduction (₦)</Label>
                   <Input value={taxDeduction} onChange={e => setTaxDeduction(e.target.value)} placeholder="0" className="h-11" type="number" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">Upload Transfer Evidence</Label>
-                  <Input type="file" multiple accept=".pdf,.png,.jpg,.jpeg" onChange={e => setEvidenceFiles(e.target.files)} className="h-11 cursor-pointer" />
-                </div>
               </>
             )}
             <div className="space-y-2">
-              <Label className="text-base font-medium">Notes *</Label>
+              <Label className="text-base font-medium">Notes</Label>
               <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add relevant notes..." className="min-h-[80px] resize-none" />
             </div>
             <div className="flex gap-3">
@@ -169,7 +152,7 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
               <Button
                 type="button"
                 onClick={handleAction}
-                disabled={loading || !notes.trim() || (action === 'approve' && !reference.trim())}
+                disabled={loading || (action === 'approve' && !reference.trim())}
                 className={`flex-1 h-11 text-white ${action === 'approve' ? 'bg-spl-success hover:bg-spl-success-dark' : action === 'hold' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-spl-danger hover:bg-spl-danger-dark'}`}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}

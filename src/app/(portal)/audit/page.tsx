@@ -4,20 +4,9 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ShieldCheck, ArrowRight } from 'lucide-react'
-import { COMPLETION_STATUS_LABELS } from '@/lib/constants'
+import { COMPLETION_STATUS_LABELS, COMPLETION_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
 import type { Profile, CompletionReport, CompletionStatus } from '@/types/database'
-
-const STATUS_COLORS: Record<CompletionStatus, string> = {
-  submitted: 'bg-spl-blue-light text-spl-blue-dark',
-  supervisor_review: 'bg-cyan-100 text-cyan-800',
-  md_verification: 'bg-yellow-100 text-yellow-800',
-  audit_review: 'bg-purple-100 text-purple-800',
-  accounts_review: 'bg-orange-100 text-orange-800',
-  payment_pending: 'bg-indigo-100 text-indigo-800',
-  payment_completed: 'bg-spl-success-bg text-spl-success',
-  rejected: 'bg-spl-danger-bg text-spl-danger',
-}
 
 export default async function AuditPage() {
   const { supabase, user, profile } = await getSessionProfile()
@@ -69,7 +58,7 @@ export default async function AuditPage() {
                   href={`/completions/${cr.id}`}
                   className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-slate-100 hover:border-purple-200"
                 >
-                  <div className="w-11 h-11 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 rounded-sm bg-purple-100 flex items-center justify-center flex-shrink-0">
                     <ShieldCheck className="w-5 h-5 text-purple-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -79,7 +68,7 @@ export default async function AuditPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <Badge className={STATUS_COLORS[cr.status as CompletionStatus]}>
+                    <Badge className={COMPLETION_STATUS_COLORS[cr.status as CompletionStatus]}>
                       {COMPLETION_STATUS_LABELS[cr.status as CompletionStatus]}
                     </Badge>
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-purple-500" />
@@ -113,7 +102,7 @@ export default async function AuditPage() {
                       {cr.contractors?.company_name} · {cr.contracts?.contract_number}
                     </p>
                   </div>
-                  <Badge className={STATUS_COLORS[cr.status as CompletionStatus]}>
+                  <Badge className={COMPLETION_STATUS_COLORS[cr.status as CompletionStatus]}>
                     {COMPLETION_STATUS_LABELS[cr.status as CompletionStatus]}
                   </Badge>
                 </Link>

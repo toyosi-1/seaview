@@ -32,7 +32,7 @@ export function StatusBreakdown({ data, title }: StatusBreakdownProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Bar visualization */}
-        <div className="flex h-3 rounded-full overflow-hidden bg-slate-100">
+        <div className="flex h-3 rounded-sm overflow-hidden bg-slate-100">
           {data.map((d, i) => {
             if (d.count === 0) return null
             const pct = (d.count / total) * 100

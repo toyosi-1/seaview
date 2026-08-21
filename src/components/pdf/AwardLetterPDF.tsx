@@ -17,12 +17,12 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
   },
   logoImage: {
-    width: 44,
-    height: 44,
-    marginBottom: 4,
+    width: 70,
+    height: 70,
+    marginBottom: 6,
     objectFit: 'contain',
   },
   orgNameRow: {
@@ -31,27 +31,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   orgName: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Helvetica-Bold',
     color: '#1a1a2e',
     textAlign: 'center',
   },
   rcNumber: {
-    fontSize: 6.5,
+    fontSize: 7,
     color: '#64748b',
     marginLeft: 4,
     marginBottom: 3,
   },
   orgSub: {
-    fontSize: 8.5,
+    fontSize: 9,
     color: '#475569',
     marginTop: 2,
     textAlign: 'center',
   },
   headerRule: {
-    borderBottom: '1.5px solid #1a1a2e',
-    marginTop: 10,
-    marginBottom: 18,
+    borderBottom: '2px solid #1a1a2e',
+    marginTop: 8,
+    marginBottom: 20,
   },
   refDateRow: {
     flexDirection: 'row',
@@ -109,11 +109,6 @@ const styles = StyleSheet.create({
     height: 42,
     objectFit: 'contain',
   },
-  sigName: {
-    fontSize: 10.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#1a1a2e',
-  },
   sigTitle: {
     fontSize: 10,
     color: '#1a1a2e',
@@ -126,8 +121,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerLogo: {
-    width: 26,
-    height: 26,
+    width: 32,
+    height: 32,
     marginBottom: 4,
     objectFit: 'contain',
   },
@@ -158,7 +153,7 @@ interface AwardLetterData {
   awardDate: string
   bidDate?: string
   completionPeriod?: string
-  mdName: string
+  mdName?: string
   mdSignatureUrl?: string
 }
 
@@ -166,12 +161,12 @@ const VAT_RATE = 7.5
 const STAMP_DUTY_RATE = 1
 
 const logoSrc = typeof window !== 'undefined'
-  ? `${window.location.origin}/brand/spl-logo-mark.png`
-  : '/brand/spl-logo-mark.png'
+  ? `${window.location.origin}/brand/spl-logo-full.png`
+  : '/brand/spl-logo-full.png'
 
 const npaLogoSrc = typeof window !== 'undefined'
-  ? `${window.location.origin}/brand/npa-logo-mark.png`
-  : '/brand/npa-logo-mark.png'
+  ? `${window.location.origin}/brand/npa-logo-full.png`
+  : '/brand/npa-logo-full.png'
 
 function AwardLetterDoc({ data }: { data: AwardLetterData }) {
   const formattedValue = new Intl.NumberFormat('en-NG', {
@@ -187,6 +182,7 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
       <Page size="A4" style={styles.page}>
         {/* Header / Letterhead */}
         <View style={styles.header}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image style={styles.logoImage} src={logoSrc} />
           <View style={styles.orgNameRow}>
             <Text style={styles.orgName}>Seaview Properties Limited</Text>
@@ -245,13 +241,19 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
         <Text style={styles.closing}>Yours faithfully,</Text>
 
         <View style={styles.sigImageWrap}>
-          {data.mdSignatureUrl && <Image src={data.mdSignatureUrl} style={styles.sigImage} />}
+          {data.mdSignatureUrl && (
+            <>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image src={data.mdSignatureUrl} style={styles.sigImage} />
+            </>
+          )}
         </View>
-        <Text style={styles.sigName}>{data.mdName}</Text>
         <Text style={styles.sigTitle}>Managing Director</Text>
+        <Text style={styles.sigTitle}>For: Seaview Properties Limited</Text>
 
         {/* Footer */}
         <View style={styles.footer} fixed>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image style={styles.footerLogo} src={npaLogoSrc} />
           <View style={styles.footerRow}>
             <View style={styles.footerLine} />

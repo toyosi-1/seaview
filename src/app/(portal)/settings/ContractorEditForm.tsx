@@ -5,17 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Building2, Loader2, Save } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import type { Contractor } from '@/types/database'
 
 export function ContractorEditForm({ contractor }: { contractor: Contractor }) {
   const [companyName, setCompanyName] = useState(contractor.company_name)
   const [cacNumber, setCacNumber] = useState(contractor.cac_number ?? '')
   const [tinNumber, setTinNumber] = useState(contractor.tin_number ?? '')
-  const [phone, setPhone] = useState(contractor.phone ?? '')
-  const [address, setAddress] = useState(contractor.address ?? '')
   const [bankName, setBankName] = useState(contractor.bank_name ?? '')
   const [accountNumber, setAccountNumber] = useState(contractor.account_number ?? '')
   const [accountName, setAccountName] = useState(contractor.account_name ?? '')
@@ -32,14 +29,12 @@ export function ContractorEditForm({ contractor }: { contractor: Contractor }) {
       const supabase = createClient()
       const { error } = await supabase.from('contractors').update({
         company_name: companyName.trim(),
-        cac_number: cacNumber.trim() || null,
-        tin_number: tinNumber.trim() || null,
-        phone: phone.trim() || null,
-        address: address.trim() || null,
-        bank_name: bankName.trim() || null,
-        account_number: accountNumber.trim() || null,
-        account_name: accountName.trim() || null,
-      } as never).eq('id', contractor.id)
+        cac_number: cacNumber.trim() || undefined,
+        tin_number: tinNumber.trim() || undefined,
+        bank_name: bankName.trim() || undefined,
+        account_number: accountNumber.trim() || undefined,
+        account_name: accountName.trim() || undefined,
+      }).eq('id', contractor.id)
       if (error) throw error
       toast.success('Company profile updated successfully')
     } catch (err: unknown) {
@@ -64,14 +59,6 @@ export function ContractorEditForm({ contractor }: { contractor: Contractor }) {
           <Label className="font-medium">TIN Number</Label>
           <Input value={tinNumber} onChange={e => setTinNumber(e.target.value)} className="h-11" />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label className="font-medium">Phone Number</Label>
-        <Input value={phone} onChange={e => setPhone(e.target.value)} className="h-11" />
-      </div>
-      <div className="space-y-2">
-        <Label className="font-medium">Address</Label>
-        <Textarea value={address} onChange={e => setAddress(e.target.value)} className="min-h-[70px] resize-none" />
       </div>
       <div className="pt-2 border-t border-slate-100">
         <p className="text-sm font-semibold text-slate-600 mb-3">Banking Details</p>

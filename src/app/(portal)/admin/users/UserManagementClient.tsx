@@ -37,7 +37,7 @@ export function UserManagementClient() {
 
       if (result.error) throw new Error(result.error)
 
-      toast.success(`${ROLE_LABELS[role]} account created. Temporary password: ${tempPassword}`)
+      toast.success(`${ROLE_LABELS[role]} account created successfully. Provide the temporary password through a secure channel.`)
       setOpen(false)
       setEmail(''); setTempPassword('')
       router.refresh()

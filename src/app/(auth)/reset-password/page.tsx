@@ -31,7 +31,7 @@ function ResetPasswordContent() {
   useEffect(() => {
     const code = searchParams.get('code')
     if (!code) {
-      setExchanging(false)
+      router.push('/forgot-password')
       return
     }
     const supabase = createClient()
@@ -89,7 +89,7 @@ function ResetPasswordContent() {
             <CardContent>
               {done ? (
                 <div className="text-center space-y-4 py-4">
-                  <div className="w-16 h-16 rounded-full bg-spl-success-bg flex items-center justify-center mx-auto">
+                  <div className="w-16 h-16 rounded-sm bg-spl-success-bg flex items-center justify-center mx-auto">
                     <CheckCircle className="w-8 h-8 text-spl-success" />
                   </div>
                   <p className="text-slate-600">Redirecting you to login...</p>

@@ -54,7 +54,7 @@ export default async function AuditLogPage() {
                       <div className="md:col-span-2">
                         <p className="font-semibold text-slate-800 text-sm">{log.action}</p>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          {actor?.full_name ?? 'System'} · {actor?.email ?? '—'}
+                          {actor?.full_name ?? (log.user_role ? ROLE_LABELS[log.user_role as UserRole] ?? log.user_role : 'System')} · {actor?.email ?? '—'}
                         </p>
                       </div>
                       <div>

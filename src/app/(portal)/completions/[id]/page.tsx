@@ -1,28 +1,18 @@
 import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { CompletionActions } from './CompletionActions'
-import { ArrowLeft, FileText, Image } from 'lucide-react'
-import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS, INTERNAL_ROLES } from '@/lib/constants'
-import { formatDateTime } from '@/lib/utils/format'
+import { ArrowLeft, FileText, Image as ImageIcon, Banknote } from 'lucide-react'
+import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS, INTERNAL_ROLES, COMPLETION_STATUS_COLORS } from '@/lib/constants'
+import { formatDateTime, formatCurrency } from '@/lib/utils/format'
 import type { Profile, CompletionReport, CompletionStatus, CompletionDocument } from '@/types/database'
 
 interface PageProps { params: Promise<{ id: string }> }
-
-const STATUS_COLORS: Record<CompletionStatus, string> = {
-  submitted: 'bg-spl-blue-light text-spl-blue-dark',
-  supervisor_review: 'bg-cyan-100 text-cyan-800',
-  md_verification: 'bg-yellow-100 text-yellow-800',
-  audit_review: 'bg-purple-100 text-purple-800',
-  accounts_review: 'bg-orange-100 text-orange-800',
-  payment_pending: 'bg-indigo-100 text-indigo-800',
-  payment_completed: 'bg-spl-success-bg text-spl-success',
-  rejected: 'bg-spl-danger-bg text-spl-danger',
-}
 
 export default async function CompletionDetailPage({ params }: PageProps) {
   const { id } = await params
@@ -33,9 +23,9 @@ export default async function CompletionDetailPage({ params }: PageProps) {
 
   const { data: cr } = await supabase
     .from('completion_reports')
-    .select('*,contracts(contract_number,contract_value,title,project_supervisor_id),contractors(company_name,contact_person,email)')
+    .select('*,contracts(contract_number,contract_value,title,project_supervisor_id),contractors(company_name,contact_person,email,bank_name,account_number,account_name)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   if (!cr) notFound()
 
   const { data: docs } = await supabase
@@ -43,7 +33,7 @@ export default async function CompletionDetailPage({ params }: PageProps) {
 
   const report = cr as unknown as CompletionReport & {
     contracts: { contract_number: string; contract_value: number; title: string; project_supervisor_id: string | null }
-    contractors: { company_name: string; contact_person: string | null; email: string }
+    contractors: { company_name: string; contact_person: string | null; email: string; bank_name: string; account_number: string; account_name: string }
   }
   const projectSupervisorId = report.contracts?.project_supervisor_id ?? null
   const status = report.status as CompletionStatus
@@ -65,7 +55,7 @@ export default async function CompletionDetailPage({ params }: PageProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-bold text-slate-800 truncate">{report.title}</h1>
-            <Badge className={STATUS_COLORS[status]}>{statusLabel}</Badge>
+            <Badge className={COMPLETION_STATUS_COLORS[status]}>{statusLabel}</Badge>
           </div>
           <p className="text-slate-500 mt-1">{report.contracts?.contract_number} · Submitted {formatDateTime(report.submitted_at)}</p>
         </div>
@@ -99,7 +89,7 @@ export default async function CompletionDetailPage({ params }: PageProps) {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
-                  <Image className="w-5 h-5" />
+                  <ImageIcon className="w-5 h-5" />
                   Completion Images
                 </CardTitle>
               </CardHeader>
@@ -107,8 +97,8 @@ export default async function CompletionDetailPage({ params }: PageProps) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {images.map(img => (
                     <a key={img.id} href={img.file_url} target="_blank" rel="noopener noreferrer"
-                      className="block rounded-xl overflow-hidden border border-slate-200 hover:border-blue-300 transition-colors aspect-square bg-slate-100">
-                      <img src={img.file_url} alt={img.file_name} className="w-full h-full object-cover" />
+                      className="relative block rounded-xl overflow-hidden border border-slate-200 hover:border-blue-300 transition-colors aspect-square bg-slate-100">
+                      <Image src={img.file_url} alt={img.file_name} fill className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
                     </a>
                   ))}
                 </div>
@@ -139,6 +129,48 @@ export default async function CompletionDetailPage({ params }: PageProps) {
             </Card>
           )}
 
+          {/* Payment preview for accounts staff */}
+          {p.role === 'head_of_accounts' && status === 'accounts_review' && (
+            <Card className="border-0 shadow-sm border-l-4 border-l-spl-success">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-spl-success" />
+                  Payment Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Payment Amount</p>
+                    <p className="font-bold text-slate-800 text-2xl mt-0.5">{formatCurrency(report.contracts?.contract_value ?? 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Contractor</p>
+                    <p className="font-semibold text-slate-800 mt-0.5">{report.contractors?.company_name}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Bank</p>
+                    <p className="font-semibold text-slate-800 mt-0.5">{report.contractors?.bank_name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Account Number</p>
+                    <p className="font-semibold text-slate-800 mt-0.5">{report.contractors?.account_number || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Account Name</p>
+                    <p className="font-semibold text-slate-800 mt-0.5">{report.contractors?.account_name || '—'}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-spl-success-bg rounded-xl text-sm text-slate-600">
+                  Review the bank details above, make the payment externally, then click <strong>Payment Made</strong> to close out this contract.
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Actions for internal staff */}
           {INTERNAL_ROLES.includes(p.role) && (
             <CompletionActions completion={report} profile={p} projectSupervisorId={projectSupervisorId} />
@@ -153,35 +185,35 @@ export default async function CompletionDetailPage({ params }: PageProps) {
               <CardContent>
                 <ol className="space-y-3">
                   <li className="flex gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['supervisor_review', 'md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
+                    <span className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 ${['supervisor_review', 'md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Submit Completion Report</p>
                       <p className="text-xs text-slate-500">You upload evidence of job completion</p>
                     </div>
                   </li>
                   <li className="flex gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
+                    <span className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 ${['md_verification', 'audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Project Supervisor Review</p>
                       <p className="text-xs text-slate-500">Supervisor verifies the work on-site</p>
                     </div>
                   </li>
                   <li className="flex gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>3</span>
+                    <span className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 ${['audit_review', 'accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>3</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-700">MD Final Acceptance</p>
                       <p className="text-xs text-slate-500">Managing Director gives final approval</p>
                     </div>
                   </li>
                   <li className="flex gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${['accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>4</span>
+                    <span className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 ${['accounts_review', 'payment_pending', 'payment_completed'].includes(status) ? 'bg-spl-success text-white' : 'bg-slate-200 text-slate-500'}`}>4</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Audit & Accounts Review</p>
                       <p className="text-xs text-slate-500">Finance team processes your payment</p>
                     </div>
                   </li>
                   <li className="flex gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${status === 'payment_completed' ? 'bg-spl-success text-white' : status === 'payment_pending' ? 'bg-spl-blue text-white' : 'bg-slate-200 text-slate-500'}`}>5</span>
+                    <span className={`w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 ${status === 'payment_completed' ? 'bg-spl-success text-white' : status === 'payment_pending' ? 'bg-spl-blue text-white' : 'bg-slate-200 text-slate-500'}`}>5</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Payment Completed</p>
                       <p className="text-xs text-slate-500">Funds transferred to your bank account</p>

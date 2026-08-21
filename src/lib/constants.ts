@@ -107,6 +107,17 @@ export const COMPLETION_STATUS_LABELS: Record<CompletionStatus, string> = {
   rejected: 'Rejected',
 }
 
+export const COMPLETION_STATUS_COLORS: Record<CompletionStatus, string> = {
+  submitted: 'bg-spl-blue-light text-spl-blue-dark',
+  supervisor_review: 'bg-cyan-100 text-cyan-800',
+  md_verification: 'bg-yellow-100 text-yellow-800',
+  audit_review: 'bg-purple-100 text-purple-800',
+  accounts_review: 'bg-orange-100 text-orange-800',
+  payment_pending: 'bg-indigo-100 text-indigo-800',
+  payment_completed: 'bg-spl-success-bg text-spl-success',
+  rejected: 'bg-spl-danger-bg text-spl-danger',
+}
+
 // Simplified statuses shown to contractors
 export const CONTRACTOR_COMPLETION_STATUS_LABELS: Partial<Record<CompletionStatus, string>> = {
   submitted: 'Completion Under Review',

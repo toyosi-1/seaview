@@ -110,7 +110,7 @@ export default function RegisterPage() {
           <div className="flex items-center justify-center gap-2">
             {STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm font-bold transition-all
                   ${i < step ? 'bg-spl-success text-white' : i === step ? 'bg-spl-blue text-white' : 'bg-slate-100 text-slate-400'}`}>
                   {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>

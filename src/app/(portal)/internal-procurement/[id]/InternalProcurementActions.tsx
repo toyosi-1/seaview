@@ -60,7 +60,7 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
 
       const { error } = await supabase
         .from('internal_procurement_requests')
-        .update(update as never)
+        .update(update as Partial<InternalProcurementRequest>)
         .eq('id', request.id)
       if (error) throw error
 

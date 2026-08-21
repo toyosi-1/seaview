@@ -27,7 +27,7 @@ export const getSessionProfile = cache(async () => {
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   return { supabase, user, profile: (profile ?? null) as Profile | null }
 })

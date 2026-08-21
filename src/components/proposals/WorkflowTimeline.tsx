@@ -13,7 +13,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
   const isRejected = status === 'rejected'
   const isReturned = status === 'returned'
 
-  const getStageStatus = (stageKey: string, idx: number) => {
+  const getStageStatus = (stageKey: string) => {
     const stageOrder = WORKFLOW_STAGES.map(s => s.key)
     const currentIdx = stageOrder.indexOf(status)
     const stageIdx = stageOrder.indexOf(stageKey)
@@ -30,18 +30,16 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
   return (
     <div className="space-y-0">
       {WORKFLOW_STAGES.map((stage, idx) => {
-        const stageStatus = getStageStatus(stage.key, idx)
+        const stageStatus = getStageStatus(stage.key)
         const isLast = idx === WORKFLOW_STAGES.length - 1
-        const timelineEntry = timeline.find(t =>
-          t.stage === stage.key || t.stage.includes(stage.key.split('_')[0])
-        )
+        const timelineEntry = timeline.find(t => t.stage === stage.key)
 
         return (
           <div key={stage.key} className="flex gap-4">
             {/* Icon column */}
             <div className="flex flex-col items-center">
               <div className={cn(
-                'relative z-10 w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300',
+                'relative z-10 w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 transition-all duration-300',
                 stageStatus === 'done' && 'bg-spl-success text-white shadow-sm',
                 stageStatus === 'current' && 'bg-white ring-[3px] ring-spl-blue shadow-md',
                 stageStatus === 'pending' && 'bg-white ring-2 ring-slate-200',
@@ -50,7 +48,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
                 {stageStatus === 'done' && <CheckCircle2 className="w-[18px] h-[18px]" />}
                 {stageStatus === 'current' && (
                   <span className="relative flex items-center justify-center w-[18px] h-[18px]">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-spl-blue/25 animate-ping" />
+                    <span className="absolute inline-flex h-full w-full rounded-sm bg-spl-blue/25 animate-ping" />
                     <Clock className="w-[18px] h-[18px] text-spl-blue relative" />
                   </span>
                 )}
@@ -59,7 +57,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
               </div>
               {!isLast && (
                 <div className={cn(
-                  'w-0.5 flex-1 my-1 min-h-[2.25rem] rounded-full transition-colors duration-300',
+                  'w-0.5 flex-1 my-1 min-h-[2.25rem] rounded-sm transition-colors duration-300',
                   stageStatus === 'done' ? 'bg-spl-success' : 'bg-slate-200'
                 )} />
               )}
@@ -78,7 +76,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
                   {stage.label}
                 </p>
                 {stageStatus === 'current' && (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-spl-blue bg-spl-blue-light px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-spl-blue bg-spl-blue-light px-2 py-0.5 rounded-sm">
                     In progress
                   </span>
                 )}
@@ -111,7 +109,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
           isRejected ? 'bg-spl-danger-bg border-red-100' : 'bg-spl-warning-bg border-amber-100'
         )}>
           <div className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+            'w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0',
             isRejected ? 'bg-red-100' : 'bg-amber-100'
           )}>
             {isRejected ? <XCircle className="w-[18px] h-[18px] text-spl-danger" /> : <RotateCcw className="w-[18px] h-[18px] text-spl-warning" />}

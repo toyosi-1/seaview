@@ -29,7 +29,7 @@ export default async function NotificationsPage() {
   // Mark all as read
   await supabase
     .from('notifications')
-    .update({ is_read: true } as never)
+    .update({ is_read: true })
     .eq('user_id', user.id)
     .eq('is_read', false)
 
@@ -59,7 +59,7 @@ export default async function NotificationsPage() {
                   key={n.id}
                   className="flex items-start gap-4 px-5 py-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
                 >
-                  <div className={`w-2 h-2 rounded-full mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-spl-blue-light0' : 'bg-transparent'}`} />
+                  <div className={`w-2 h-2 rounded-sm mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-spl-blue-light' : 'bg-transparent'}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-800 text-base">{n.title}</p>

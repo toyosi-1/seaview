@@ -51,7 +51,11 @@ export async function POST(request: Request) {
     email,
     role: 'contractor',
     is_active: true,
-  } as never)
+    phone: null,
+    department: null,
+    signature_url: null,
+    avatar_url: null,
+  })
 
   if (profileError) {
     await admin.auth.admin.deleteUser(userId)
@@ -70,8 +74,11 @@ export async function POST(request: Request) {
     contact_person: null,
     email,
     phone: null,
+    address: null,
     status: 'active',
-  } as never)
+    verified_at: null,
+    verified_by: null,
+  })
 
   if (contractorError) {
     await admin.from('profiles').delete().eq('id', userId)

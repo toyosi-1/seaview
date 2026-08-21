@@ -60,7 +60,7 @@ export default async function TendersPage() {
             const count = tenders.filter(t => t.status === key).length
             if (count === 0) return null
             return (
-              <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${TENDER_STATUS_COLORS[key as TenderStatus]}`}>
+              <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${TENDER_STATUS_COLORS[key as TenderStatus]}`}>
                 {label} <span className="font-bold">{count}</span>
               </span>
             )
@@ -95,7 +95,7 @@ export default async function TendersPage() {
                     href={`/tenders/${tender.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                       <Briefcase className="w-5 h-5 text-spl-blue" />
                     </div>
                     <div className="flex-1 min-w-0">

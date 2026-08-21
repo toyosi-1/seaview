@@ -62,6 +62,7 @@ export function AppraisalDocuments({ proposalId }: AppraisalDocumentsProps) {
   }, [proposalId])
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchDocuments()
   }, [fetchDocuments])
 
@@ -103,7 +104,7 @@ export function AppraisalDocuments({ proposalId }: AppraisalDocumentsProps) {
             file_url: path,
             file_size: file.size,
             uploaded_by: user.id,
-          } as never)
+          })
 
         if (dbError) throw dbError
       })

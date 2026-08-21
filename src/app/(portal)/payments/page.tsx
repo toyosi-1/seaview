@@ -22,7 +22,7 @@ export default async function PaymentsPage() {
   let payments: Payment[] = []
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).single()
+    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
       const { data } = await supabase
@@ -33,12 +33,6 @@ export default async function PaymentsPage() {
         .order('created_at', { ascending: false })
       payments = (data ?? []) as unknown as Payment[]
     }
-  } else if (['head_of_accounts', 'ict_admin'].includes(p.role)) {
-    const { data } = await supabase
-      .from('payments')
-      .select('*,contractors(company_name),contracts(title,contract_number)')
-      .order('created_at', { ascending: false })
-    payments = (data ?? []) as unknown as Payment[]
   } else {
     const { data } = await supabase
       .from('payments')
@@ -77,7 +71,7 @@ export default async function PaymentsPage() {
                     href={`/payments/${pay.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-sm bg-emerald-100 flex items-center justify-center flex-shrink-0">
                       <Banknote className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="flex-1 min-w-0">

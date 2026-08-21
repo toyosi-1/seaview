@@ -65,6 +65,7 @@ export type NotificationType =
   | 'payment_approved'
 
 export interface Profile {
+  [key: string]: unknown
   id: string
   full_name: string | null
   email: string
@@ -79,6 +80,7 @@ export interface Profile {
 }
 
 export interface Contractor {
+  [key: string]: unknown
   id: string
   user_id: string
   company_name: string
@@ -99,6 +101,7 @@ export interface Contractor {
 }
 
 export interface ContractorDocument {
+  [key: string]: unknown
   id: string
   contractor_id: string
   document_type: string
@@ -110,6 +113,7 @@ export interface ContractorDocument {
 }
 
 export interface Proposal {
+  [key: string]: unknown
   id: string
   proposal_number: string
   contractor_id: string
@@ -138,6 +142,7 @@ export interface Proposal {
 }
 
 export interface Tender {
+  [key: string]: unknown
   id: string
   contract_number: string
   title: string
@@ -154,6 +159,7 @@ export interface Tender {
 }
 
 export interface ProposalDocument {
+  [key: string]: unknown
   id: string
   proposal_id: string
   document_type: string
@@ -165,6 +171,7 @@ export interface ProposalDocument {
 }
 
 export interface ProposalComment {
+  [key: string]: unknown
   id: string
   proposal_id: string
   author_id: string
@@ -176,6 +183,7 @@ export interface ProposalComment {
 }
 
 export interface ProposalTimeline {
+  [key: string]: unknown
   id: string
   proposal_id: string
   actor_id: string
@@ -187,6 +195,7 @@ export interface ProposalTimeline {
 }
 
 export interface Contract {
+  [key: string]: unknown
   id: string
   contract_number: string
   proposal_id: string
@@ -211,6 +220,7 @@ export interface Contract {
 }
 
 export interface CompletionReport {
+  [key: string]: unknown
   id: string
   contract_id: string
   contractor_id: string
@@ -238,6 +248,7 @@ export interface CompletionReport {
 }
 
 export interface CompletionDocument {
+  [key: string]: unknown
   id: string
   completion_id: string
   document_type: string
@@ -249,6 +260,7 @@ export interface CompletionDocument {
 }
 
 export interface Payment {
+  [key: string]: unknown
   id: string
   payment_number: string
   completion_id: string
@@ -273,6 +285,7 @@ export interface Payment {
 }
 
 export interface PaymentDocument {
+  [key: string]: unknown
   id: string
   payment_id: string
   document_type: string
@@ -284,6 +297,7 @@ export interface PaymentDocument {
 }
 
 export interface Notification {
+  [key: string]: unknown
   id: string
   user_id: string
   type: NotificationType
@@ -296,6 +310,7 @@ export interface Notification {
 }
 
 export interface AuditLog {
+  [key: string]: unknown
   id: string
   user_id: string | null
   user_role: UserRole | null
@@ -312,6 +327,7 @@ export interface AuditLog {
 }
 
 export interface InternalProcurementRequest {
+  [key: string]: unknown
   id: string
   request_number: string
   department: Department
@@ -332,6 +348,7 @@ export interface InternalProcurementRequest {
 }
 
 export interface InternalProcurementDocument {
+  [key: string]: unknown
   id: string
   request_id: string
   file_name: string
@@ -345,23 +362,25 @@ export interface InternalProcurementDocument {
 export type Database = {
   public: {
     Tables: {
-      profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Profile> }
-      contractors: { Row: Contractor; Insert: Omit<Contractor, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Contractor> }
-      contractor_documents: { Row: ContractorDocument; Insert: Omit<ContractorDocument, 'id' | 'created_at'>; Update: Partial<ContractorDocument> }
-      proposals: { Row: Proposal; Insert: Omit<Proposal, 'id' | 'proposal_number' | 'created_at' | 'updated_at'>; Update: Partial<Proposal> }
-      proposal_documents: { Row: ProposalDocument; Insert: Omit<ProposalDocument, 'id' | 'created_at'>; Update: Partial<ProposalDocument> }
-      proposal_comments: { Row: ProposalComment; Insert: Omit<ProposalComment, 'id' | 'created_at'>; Update: Partial<ProposalComment> }
-      proposal_timeline: { Row: ProposalTimeline; Insert: Omit<ProposalTimeline, 'id' | 'created_at'>; Update: Partial<ProposalTimeline> }
-      contracts: { Row: Contract; Insert: Omit<Contract, 'id' | 'contract_number' | 'created_at' | 'updated_at'>; Update: Partial<Contract> }
-      completion_reports: { Row: CompletionReport; Insert: Omit<CompletionReport, 'id' | 'created_at' | 'updated_at'>; Update: Partial<CompletionReport> }
-      completion_documents: { Row: CompletionDocument; Insert: Omit<CompletionDocument, 'id' | 'created_at'>; Update: Partial<CompletionDocument> }
-      payments: { Row: Payment; Insert: Omit<Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>; Update: Partial<Payment> }
-      payment_documents: { Row: PaymentDocument; Insert: Omit<PaymentDocument, 'id' | 'created_at'>; Update: Partial<PaymentDocument> }
-      notifications: { Row: Notification; Insert: Omit<Notification, 'id' | 'created_at'>; Update: Partial<Notification> }
-      audit_logs: { Row: AuditLog; Insert: Omit<AuditLog, 'id' | 'created_at'>; Update: never }
-      internal_procurement_requests: { Row: InternalProcurementRequest; Insert: Omit<InternalProcurementRequest, 'id' | 'request_number' | 'created_at' | 'updated_at'>; Update: Partial<InternalProcurementRequest> }
-      internal_procurement_documents: { Row: InternalProcurementDocument; Insert: Omit<InternalProcurementDocument, 'id' | 'created_at'>; Update: Partial<InternalProcurementDocument> }
-      tenders: { Row: Tender; Insert: Omit<Tender, 'id' | 'contract_number' | 'created_at' | 'updated_at'>; Update: Partial<Tender> }
+      profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Profile>; Relationships: never[] }
+      contractors: { Row: Contractor; Insert: Omit<Contractor, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Contractor>; Relationships: never[] }
+      contractor_documents: { Row: ContractorDocument; Insert: Omit<ContractorDocument, 'id' | 'created_at'>; Update: Partial<ContractorDocument>; Relationships: never[] }
+      proposals: { Row: Proposal; Insert: Omit<Proposal, 'id' | 'proposal_number' | 'created_at' | 'updated_at'>; Update: Partial<Proposal>; Relationships: never[] }
+      proposal_documents: { Row: ProposalDocument; Insert: Omit<ProposalDocument, 'id' | 'created_at'>; Update: Partial<ProposalDocument>; Relationships: never[] }
+      proposal_comments: { Row: ProposalComment; Insert: Omit<ProposalComment, 'id' | 'created_at'>; Update: Partial<ProposalComment>; Relationships: never[] }
+      proposal_timeline: { Row: ProposalTimeline; Insert: Omit<ProposalTimeline, 'id' | 'created_at'>; Update: Partial<ProposalTimeline>; Relationships: never[] }
+      contracts: { Row: Contract; Insert: Omit<Contract, 'id' | 'contract_number' | 'created_at' | 'updated_at'>; Update: Partial<Contract>; Relationships: never[] }
+      completion_reports: { Row: CompletionReport; Insert: Omit<CompletionReport, 'id' | 'created_at' | 'updated_at'>; Update: Partial<CompletionReport>; Relationships: never[] }
+      completion_documents: { Row: CompletionDocument; Insert: Omit<CompletionDocument, 'id' | 'created_at'>; Update: Partial<CompletionDocument>; Relationships: never[] }
+      payments: { Row: Payment; Insert: Omit<Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>; Update: Partial<Payment>; Relationships: never[] }
+      payment_documents: { Row: PaymentDocument; Insert: Omit<PaymentDocument, 'id' | 'created_at'>; Update: Partial<PaymentDocument>; Relationships: never[] }
+      notifications: { Row: Notification; Insert: Omit<Notification, 'id' | 'created_at'>; Update: Partial<Notification>; Relationships: never[] }
+      audit_logs: { Row: AuditLog; Insert: Omit<AuditLog, 'id' | 'created_at'>; Update: never; Relationships: never[] }
+      internal_procurement_requests: { Row: InternalProcurementRequest; Insert: Omit<InternalProcurementRequest, 'id' | 'request_number' | 'created_at' | 'updated_at'>; Update: Partial<InternalProcurementRequest>; Relationships: never[] }
+      internal_procurement_documents: { Row: InternalProcurementDocument; Insert: Omit<InternalProcurementDocument, 'id' | 'created_at'>; Update: Partial<InternalProcurementDocument>; Relationships: never[] }
+      tenders: { Row: Tender; Insert: Omit<Tender, 'id' | 'contract_number' | 'created_at' | 'updated_at'>; Update: Partial<Tender>; Relationships: never[] }
     }
+    Views: {}
+    Functions: {}
   }
 }

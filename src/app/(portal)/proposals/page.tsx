@@ -18,7 +18,7 @@ export default async function ProposalsPage() {
   let proposals: Proposal[] = []
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).single()
+    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
       const { data } = await supabase
@@ -62,7 +62,7 @@ export default async function ProposalsPage() {
             const count = proposals.filter(pr => pr.status === key).length
             if (count === 0) return null
             return (
-              <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${PROPOSAL_STATUS_COLORS[key as ProposalStatus]}`}>
+              <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${PROPOSAL_STATUS_COLORS[key as ProposalStatus]}`}>
                 {label} <span className="font-bold">{count}</span>
               </span>
             )
@@ -101,7 +101,7 @@ export default async function ProposalsPage() {
                     href={`/proposals/${proposal.id}`}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200"
                   >
-                    <div className="w-11 h-11 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5 text-spl-blue" />
                     </div>
                     <div className="flex-1 min-w-0">

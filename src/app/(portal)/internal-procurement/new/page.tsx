@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { DEPARTMENTS, DEPARTMENT_LABELS } from '@/lib/constants'
 import type { Department } from '@/types/database'
-import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
+import { notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
 
 export default function NewInternalProcurementPage() {
   const router = useRouter()
@@ -34,22 +34,36 @@ export default function NewInternalProcurementPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      const qty = Number(quantity)
+      const cost = Number(estimatedCost)
+      if (!Number.isFinite(qty) || qty < 1) throw new Error('Quantity must be at least 1')
+      if (!Number.isFinite(cost) || cost < 0) throw new Error('Estimated cost must be a non-negative number')
+
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+      const userRole = profile?.role ?? 'contractor'
+
       const { data, error } = await supabase.from('internal_procurement_requests').insert({
         department,
         requested_by: user.id,
         item_description: itemDescription.trim(),
-        quantity: Number(quantity) || 1,
-        estimated_cost: Number(estimatedCost) || 0,
+        quantity: qty,
+        estimated_cost: cost,
         reason: reason.trim(),
         status: 'submitted',
-      } as never).select().single()
+        md_reviewed_at: null,
+        md_reviewed_by: null,
+        procurement_reviewed_at: null,
+        procurement_reviewed_by: null,
+        rejection_reason: null,
+      }).select().maybeSingle()
       if (error) throw error
+      if (!data) throw new Error('Failed to create procurement request')
       const created = data as unknown as { id: string }
 
       // Audit log
       await logAudit({
         userId: user.id,
-        userRole: 'contractor',
+        userRole: userRole,
         action: 'Internal procurement request submitted',
         entityType: 'internal_procurement_request',
         entityId: created.id,

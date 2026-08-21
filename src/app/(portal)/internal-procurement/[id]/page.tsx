@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, ShoppingCart, DollarSign, Calendar } from 'lucide-react'
-import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS } from '@/lib/constants'
+import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
 import { InternalProcurementActions } from './InternalProcurementActions'
-import type { Profile, InternalProcurementRequest, InternalProcurementStatus } from '@/types/database'
+import type { Profile, InternalProcurementRequest, InternalProcurementStatus, UserRole } from '@/types/database'
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -22,12 +22,12 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
 
   const { data: reqRaw } = await supabase
     .from('internal_procurement_requests')
-    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,email,department)')
+    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,email,department,role)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
   if (!reqRaw) notFound()
 
-  const req = reqRaw as unknown as InternalProcurementRequest & { profiles: { full_name: string; email: string; department: string | null } }
+  const req = reqRaw as unknown as InternalProcurementRequest & { profiles: { full_name: string | null; email: string; department: string | null; role: UserRole } }
   const status = req.status as InternalProcurementStatus
 
   return (
@@ -102,7 +102,7 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p><span className="text-slate-500">Name:</span> <span className="font-semibold">{req.profiles?.full_name ?? 'Staff'}</span></p>
+              <p><span className="text-slate-500">Name:</span> <span className="font-semibold">{req.profiles?.full_name ?? (req.profiles?.role ? ROLE_LABELS[req.profiles.role] : 'Staff')}</span></p>
               <p><span className="text-slate-500">Email:</span> <span className="font-semibold">{req.profiles?.email}</span></p>
               <p><span className="text-slate-500">Department:</span> <span className="font-semibold">{DEPARTMENT_LABELS[req.department]}</span></p>
             </CardContent>

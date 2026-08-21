@@ -99,7 +99,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
 
       const { error: updateError } = await supabase
         .from('proposals')
-        .update(updateData as never)
+        .update(updateData as Partial<Proposal>)
         .eq('id', proposal.id)
       if (updateError) throw updateError
 
@@ -110,7 +110,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
         stage: proposal.status,
         comment: comment.trim(),
         action: selectedTransition.action,
-      } as never)
+      })
 
       // Add timeline
       await supabase.from('proposal_timeline').insert({
@@ -119,30 +119,33 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
         stage: selectedTransition.nextStage,
         action: selectedTransition.label,
         note: comment.trim(),
-      } as never)
+      })
 
       // If final approval, create contract
       if (selectedTransition.action === 'approve' && proposal.status === 'md_final_review') {
-        const { data: contractorRaw } = await supabase
-          .from('contractors').select('id').eq('id', proposal.contractor_id).single()
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _contractor = contractorRaw as unknown as { id: string } | null
-
+        const now = new Date().toISOString()
         await supabase.from('contracts').insert({
           proposal_id: proposal.id,
           contractor_id: proposal.contractor_id,
           title: proposal.title,
           contract_value: proposal.estimated_cost,
+          status: 'active',
+          award_letter_url: null,
+          awarded_at: now,
           awarded_by: profile.id,
-          contract_number: '',
           approval_reference: proposal.proposal_number,
-        } as never)
+          responsible_department: null,
+          completion_period: null,
+          project_supervisor_id: null,
+          department_assigned_at: null,
+          department_assigned_by: null,
+        })
 
         // Mark the tender as awarded so it leaves the available contracts list
         if (proposal.tender_id) {
           await supabase
             .from('tenders')
-            .update({ status: 'awarded' } as never)
+            .update({ status: 'awarded' })
             .eq('id', proposal.tender_id)
         }
       }
@@ -166,7 +169,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
 
       // Notify contractor
       const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', proposal.contractor_id).single()
+        .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
       const contractor = contractorRaw as unknown as { user_id: string } | null
       if (contractor) {
         await notify({
