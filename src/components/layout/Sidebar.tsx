@@ -137,11 +137,11 @@ export function Sidebar({ profile }: SidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
         {!collapsed && (
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center flex-shrink-0 p-1">
               <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} className="object-contain w-full h-full" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pr-2">
               <p className="text-sm font-bold text-white leading-snug">Seaview Properties Limited</p>
             </div>
           </div>
