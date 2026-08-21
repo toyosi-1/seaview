@@ -49,7 +49,7 @@ export function StatusBreakdown({ data, title }: StatusBreakdownProps) {
           })}
         </div>
         {/* Legend */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-1 gap-y-2">
           {data.map((d, i) => {
             if (d.count === 0) return null
             const colorClass = PROPOSAL_STATUS_COLORS[d.status]
@@ -57,7 +57,7 @@ export function StatusBreakdown({ data, title }: StatusBreakdownProps) {
             return (
               <div key={i} className="flex items-center gap-2 text-sm">
                 <span className={`w-3 h-3 rounded-sm ${bgColor} flex-shrink-0`} />
-                <span className="text-slate-600 truncate">{PROPOSAL_STATUS_LABELS[d.status]}</span>
+                <span className="text-slate-600">{PROPOSAL_STATUS_LABELS[d.status]}</span>
                 <span className="text-slate-800 font-semibold ml-auto">{d.count}</span>
               </div>
             )
