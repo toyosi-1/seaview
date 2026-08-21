@@ -48,25 +48,25 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
       <BrandPanel />
 
       {/* Form panel */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative">
         <div className="w-full max-w-md space-y-6">
-          <div className="hidden lg:block space-y-1">
+          <div className="hidden md:block space-y-1">
             <h2 className="text-3xl font-bold text-spl-navy">Sign In</h2>
             <p className="text-spl-text-muted text-base">Enter your credentials to access the portal</p>
           </div>
 
-          <Card className="border border-spl-border shadow-lg lg:shadow-none lg:border-0 bg-white">
-            <CardHeader className="space-y-1 pb-4 lg:hidden">
+          <Card className="border border-spl-border shadow-lg md:shadow-none md:border-0 bg-white">
+            <CardHeader className="space-y-1 pb-4 md:hidden">
               <CardTitle className="text-2xl font-bold text-center text-spl-navy">Sign In</CardTitle>
               <CardDescription className="text-center text-spl-text-muted text-base">
                 Enter your credentials to access the portal
               </CardDescription>
             </CardHeader>
-            <CardContent className="lg:px-0">
+            <CardContent className="md:px-0">
               <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-base font-medium text-slate-700">
