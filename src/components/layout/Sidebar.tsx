@@ -125,21 +125,21 @@ export function Sidebar({ profile }: SidebarProps) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
       <aside className={cn(
         'fixed left-0 top-0 h-full bg-spl-blue-dark text-white flex flex-col z-40 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       )}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center flex-shrink-0 p-1">
-              <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} className="object-contain w-full h-full" />
+              <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} priority className="object-contain w-full h-full" />
             </div>
             <div className="flex-1 min-w-0 pr-2">
               <p className="text-sm font-bold text-white leading-snug">Seaview Properties Limited</p>
@@ -155,7 +155,7 @@ export function Sidebar({ profile }: SidebarProps) {
           type="button"
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            'w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-colors hidden lg:flex',
+            'w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-colors hidden md:flex',
             collapsed && 'mx-auto mt-2'
           )}
         >
@@ -165,7 +165,7 @@ export function Sidebar({ profile }: SidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(false)}
-          className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 lg:hidden"
+          className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 md:hidden"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -243,7 +243,7 @@ export function Sidebar({ profile }: SidebarProps) {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-30 lg:hidden w-10 h-10 rounded-lg bg-spl-blue-dark text-white flex items-center justify-center shadow-lg"
+        className="fixed top-3 left-3 z-30 md:hidden w-10 h-10 rounded-lg bg-spl-blue-dark text-white flex items-center justify-center shadow-lg"
         aria-label="Open menu"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>

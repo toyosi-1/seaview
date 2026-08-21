@@ -96,13 +96,15 @@ export default async function DashboardPage() {
     proposalStatusData = statusCounts.filter(d => d.count > 0)
   }
 
-  // Completions awaiting the current user's review as Project Supervisor
-  const { data: supervisorPendingRaw } = await supabase
-    .from('completion_reports')
-    .select('*,contracts!inner(contract_number,project_supervisor_id),contractors(company_name)')
-    .eq('status', 'supervisor_review')
-    .eq('contracts.project_supervisor_id', user.id)
-    .order('submitted_at', { ascending: false })
+  // Completions awaiting the current user's review as Project Supervisor (staff only)
+  const { data: supervisorPendingRaw } = isContractor
+    ? { data: [] }
+    : await supabase
+        .from('completion_reports')
+        .select('*,contracts!inner(contract_number,project_supervisor_id),contractors(company_name)')
+        .eq('status', 'supervisor_review')
+        .eq('contracts.project_supervisor_id', user.id)
+        .order('submitted_at', { ascending: false })
   const supervisorPending = (supervisorPendingRaw ?? []) as unknown as (CompletionReport & {
     contracts: { contract_number: string }
     contractors: { company_name: string }
