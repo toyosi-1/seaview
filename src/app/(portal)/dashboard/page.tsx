@@ -295,19 +295,19 @@ export default async function DashboardPage() {
                         <Link
                           key={proposal.id}
                           href={`/proposals/${proposal.id}`}
-                          className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
+                          className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                         >
-                          <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                             <FileText className="w-5 h-5 text-spl-blue" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-slate-800 truncate text-base">{proposal.title}</p>
-                            <p className="text-sm text-slate-500 truncate">
-                              {proposal.proposal_number} · {formatRelativeTime(proposal.updated_at)}
+                          <div className="flex-1 min-w-[200px]">
+                            <p className="font-semibold text-slate-800 text-base leading-snug break-words">{proposal.title}</p>
+                            <p className="text-sm text-slate-500 break-words">
+                              {proposal.proposal_number} · {(proposal.contractors as { company_name?: string } | undefined)?.company_name ?? '—'} · {formatRelativeTime(proposal.updated_at)}
                             </p>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <p className="text-base font-bold text-slate-700 hidden sm:block">
+                          <div className="flex items-center gap-2 ml-auto">
+                            <p className="text-base font-bold text-slate-700">
                               {formatCurrency(proposal.estimated_cost)}
                             </p>
                             <Badge className={PROPOSAL_STATUS_COLORS[status]}>
@@ -357,19 +357,19 @@ export default async function DashboardPage() {
                     <Link
                       key={proposal.id}
                       href={`/proposals/${proposal.id}`}
-                      className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
+                      className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-spl-blue" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 truncate text-base">{proposal.title}</p>
-                        <p className="text-sm text-slate-500 truncate">
-                          {proposal.proposal_number} · {formatRelativeTime(proposal.updated_at)}
+                      <div className="flex-1 min-w-[200px]">
+                        <p className="font-semibold text-slate-800 text-base leading-snug break-words">{proposal.title}</p>
+                        <p className="text-sm text-slate-500 break-words">
+                          {proposal.proposal_number} · {(proposal.contractors as { company_name?: string } | undefined)?.company_name ?? '—'} · {formatRelativeTime(proposal.updated_at)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-base font-bold text-slate-700 hidden sm:block">
+                      <div className="flex items-center gap-2 ml-auto">
+                        <p className="text-base font-bold text-slate-700">
                           {formatCurrency(proposal.estimated_cost)}
                         </p>
                         <Badge className={PROPOSAL_STATUS_COLORS[status]}>
