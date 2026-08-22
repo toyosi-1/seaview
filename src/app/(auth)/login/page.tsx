@@ -66,7 +66,7 @@ function LoginContent() {
                 Enter your credentials to access the portal
               </CardDescription>
             </CardHeader>
-            <CardContent className="md:px-0">
+            <CardContent className="px-6 sm:px-8 md:px-0">
               <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-base font-medium text-slate-700">

@@ -86,7 +86,7 @@ function ResetPasswordContent() {
                 {done ? 'Your password has been updated.' : 'Enter your new password below.'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-6 sm:px-8">
               {done ? (
                 <div className="text-center space-y-4 py-4">
                   <div className="w-16 h-16 rounded-sm bg-spl-success-bg flex items-center justify-center mx-auto">

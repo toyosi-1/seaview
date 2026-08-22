@@ -131,7 +131,7 @@ export default function RegisterPage() {
               {step === 2 && 'Provide your bank information'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="px-6 sm:px-8 space-y-4">
             {step === 0 && (
               <>
                 <div className="space-y-2">

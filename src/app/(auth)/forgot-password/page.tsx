@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
                   : 'Enter your email to receive a password reset link.'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-6 sm:px-8">
               {sent ? (
                 <div className="text-center space-y-4 py-4">
                   <div className="w-16 h-16 rounded-sm bg-spl-success-bg flex items-center justify-center mx-auto">
