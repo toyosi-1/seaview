@@ -60,13 +60,13 @@ function LoginContent() {
           </div>
 
           <Card className="border border-spl-border shadow-lg md:shadow-none md:border-0 bg-white">
-            <CardHeader className="space-y-1 pb-4 md:hidden">
+            <CardHeader className="space-y-1 pb-4 md:hidden !px-8 sm:!px-10">
               <CardTitle className="text-2xl font-bold text-center text-spl-navy">Sign In</CardTitle>
               <CardDescription className="text-center text-spl-text-muted text-base">
                 Enter your credentials to access the portal
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-6 sm:px-8 md:px-0">
+            <CardContent className="!px-8 sm:!px-10">
               <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-base font-medium text-slate-700">
