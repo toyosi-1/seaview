@@ -244,9 +244,9 @@ export default async function ProposalDetailPage({ params }: PageProps) {
 
         {/* Sidebar — Workflow */}
         <div className="space-y-5">
-          <Card className="border border-spl-border shadow-sm">
+          <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-spl-navy">Approval Workflow</CardTitle>
+              <CardTitle className="text-lg font-semibold text-slate-800">Approval Workflow</CardTitle>
             </CardHeader>
             <CardContent>
               <WorkflowTimeline

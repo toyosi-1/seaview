@@ -122,7 +122,7 @@ export default async function DashboardPage() {
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-spl-navy">
+          <h1 className="text-3xl font-bold text-slate-800">
             {greeting()}, {p.full_name?.split(' ')[0] ?? ROLE_LABELS[p.role as UserRole]}
           </h1>
           <p className="text-spl-text-muted text-lg mt-1">
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
               title="Projects Awaiting Verification"
               value={completionCount}
               icon={ClipboardList}
-              color="text-spl-navy"
+              color="text-slate-800"
               bgColor="bg-spl-panel"
               href="/completions"
               urgent={completionCount > 0}
@@ -221,9 +221,9 @@ export default async function DashboardPage() {
 
       {/* Project Supervisor: Pending Completion Reviews */}
       {supervisorPending.length > 0 && (
-        <Card className="border border-spl-border shadow-sm border-l-4 border-l-spl-blue">
+        <Card className="border-0 shadow-sm border-l-4 border-l-spl-blue">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
+            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-spl-blue" />
               Completion Reports Awaiting Your Review
             </CardTitle>
@@ -271,9 +271,9 @@ export default async function DashboardPage() {
             <StatusBreakdown data={proposalStatusData} title="Quotation Status Overview" />
           </div>
           <div className="lg:col-span-2">
-            <Card className="border border-spl-border shadow-sm">
+            <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
+                <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-slate-500" />
                   Recent Activity
                 </CardTitle>
@@ -330,9 +330,9 @@ export default async function DashboardPage() {
 
       {/* Recent Activity (contractor only) */}
       {isContractor && (
-        <Card className="border border-spl-border shadow-sm">
+        <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-bold text-spl-navy flex items-center gap-2">
+            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <Clock className="w-5 h-5 text-slate-500" />
               Recent Activity
             </CardTitle>

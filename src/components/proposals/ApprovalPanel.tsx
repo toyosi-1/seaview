@@ -215,7 +215,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
   return (
     <>
       <div className="p-5 bg-spl-panel rounded-2xl space-y-4 border border-spl-border">
-        <h3 className="font-bold text-spl-navy text-base">Your Action Required</h3>
+        <h3 className="font-bold text-slate-800 text-base">Your Action Required</h3>
 
         <div className="space-y-2">
           <Label className="text-sm font-medium text-slate-600">

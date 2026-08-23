@@ -17,7 +17,7 @@ export function StatCard({ title, value, icon: Icon, color, bgColor, href, urgen
   return (
     <Link href={href} className="block h-full">
       <Card className={cn(
-        'cursor-pointer hover:shadow-md transition-all duration-200 border border-spl-border shadow-sm h-full',
+        'cursor-pointer hover:shadow-md transition-all duration-200 border-0 shadow-sm h-full',
         urgent && 'ring-1 ring-spl-danger/40'
       )}>
         <CardContent className="p-6 h-full">

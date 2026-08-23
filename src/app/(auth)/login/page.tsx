@@ -55,13 +55,13 @@ function LoginContent() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative">
         <div className="w-full max-w-md space-y-6">
           <div className="hidden md:block space-y-1">
-            <h2 className="text-3xl font-bold text-spl-navy">Sign In</h2>
+            <h2 className="text-3xl font-bold text-slate-800">Sign In</h2>
             <p className="text-spl-text-muted text-base">Enter your credentials to access the portal</p>
           </div>
 
           <Card className="border border-spl-border shadow-lg md:shadow-none md:border-0 bg-white">
             <CardHeader className="space-y-1 pb-4 md:hidden !px-8 sm:!px-10">
-              <CardTitle className="text-2xl font-bold text-center text-spl-navy">Sign In</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center text-slate-800">Sign In</CardTitle>
               <CardDescription className="text-center text-spl-text-muted text-base">
                 Enter your credentials to access the portal
               </CardDescription>

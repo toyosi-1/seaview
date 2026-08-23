@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md space-y-6">
           <Card className="border border-spl-border shadow-lg md:shadow-none md:border-0 bg-white">
             <CardHeader className="pb-4">
-              <CardTitle className="text-2xl font-bold text-center text-spl-navy">
+              <CardTitle className="text-2xl font-bold text-center text-slate-800">
                 {sent ? 'Email Sent' : 'Reset Password'}
               </CardTitle>
               <CardDescription className="text-center text-base text-spl-text-muted">

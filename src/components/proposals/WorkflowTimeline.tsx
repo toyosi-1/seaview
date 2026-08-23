@@ -68,7 +68,7 @@ export function WorkflowTimeline({ status, timeline }: WorkflowTimelineProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <p className={cn(
                   'font-semibold text-sm leading-tight',
-                  stageStatus === 'done' && 'text-spl-navy',
+                  stageStatus === 'done' && 'text-slate-800',
                   stageStatus === 'current' && 'text-spl-blue-dark',
                   stageStatus === 'pending' && 'text-slate-400',
                   stageStatus === 'inactive' && 'text-slate-300'

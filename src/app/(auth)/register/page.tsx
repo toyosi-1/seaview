@@ -102,7 +102,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-lg space-y-6">
           <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold text-spl-navy">Contractor Registration</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Contractor Registration</h1>
             <p className="text-spl-text-muted text-sm">Register your company to bid on SPL contracts</p>
           </div>
 
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                   ${i < step ? 'bg-spl-success text-white' : i === step ? 'bg-spl-blue text-white' : 'bg-slate-100 text-slate-400'}`}>
                   {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
-                <span className={`text-xs hidden sm:block ${i === step ? 'text-spl-navy font-medium' : 'text-slate-400'}`}>{s}</span>
+                <span className={`text-xs hidden sm:block ${i === step ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>{s}</span>
                 {i < STEPS.length - 1 && <div className={`w-8 h-0.5 ${i < step ? 'bg-spl-success' : 'bg-slate-200'}`} />}
               </div>
             ))}
@@ -122,7 +122,7 @@ export default function RegisterPage() {
 
         <Card className="border border-spl-border shadow-lg bg-white">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-bold text-spl-navy">
+            <CardTitle className="text-xl font-bold text-slate-800">
               Step {step + 1}: {STEPS[step]}
             </CardTitle>
             <CardDescription>
