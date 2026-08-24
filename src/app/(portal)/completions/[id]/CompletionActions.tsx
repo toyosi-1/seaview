@@ -11,7 +11,7 @@ import { CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CompletionReport, Profile, CompletionStatus } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
-import { COMPLETION_STATUS_LABELS } from '@/lib/constants'
+import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS } from '@/lib/constants'
 
 interface Action {
   label: string
@@ -154,7 +154,7 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
           title: isReject ? 'Completion Report Rejected' : isPaymentDone ? 'Payment Completed' : 'Completion Report Updated',
           message: isPaymentDone
             ? `Your completion report "${completion.title}" has been approved and payment has been made to your account.`
-            : `Your completion report "${completion.title}" has been ${selected.label.toLowerCase()}.`,
+            : `Your completion report "${completion.title}" status: ${CONTRACTOR_COMPLETION_STATUS_LABELS[selected.nextStatus] ?? COMPLETION_STATUS_LABELS[selected.nextStatus]}.`,
           referenceId: completion.id,
           referenceType: 'completion',
         })

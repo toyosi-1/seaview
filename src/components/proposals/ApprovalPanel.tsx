@@ -11,7 +11,7 @@ import { CheckCircle, XCircle, RotateCcw, ArrowRight, Loader2 } from 'lucide-rea
 import { toast } from 'sonner'
 import type { Proposal, Profile, ProposalStatus } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
-import { PROPOSAL_STATUS_LABELS } from '@/lib/constants'
+import { PROPOSAL_STATUS_LABELS, CONTRACTOR_PROPOSAL_STATUS_LABELS } from '@/lib/constants'
 
 interface StageTransition {
   action: 'approve' | 'reject' | 'return' | 'forward'
@@ -177,7 +177,7 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
           userId: contractor.user_id,
           type: notifType,
           title: `Quotation ${selectedTransition.action === 'reject' ? 'Rejected' : selectedTransition.action === 'return' ? 'Returned' : 'Updated'}`,
-          message: `Your quotation "${proposal.title}" has been ${selectedTransition.label.toLowerCase()}.`,
+          message: `Your quotation "${proposal.title}" status: ${CONTRACTOR_PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus] ?? PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus]}.`,
           referenceId: proposal.id,
           referenceType: 'proposal',
         })

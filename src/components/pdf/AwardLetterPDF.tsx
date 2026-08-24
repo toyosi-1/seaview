@@ -1,13 +1,24 @@
 'use client'
 
-import { Document, Page, Text, View, StyleSheet, Image, pdf } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image, Font, pdf } from '@react-pdf/renderer'
 import { saveAs } from 'file-saver'
 import { nairaToWords } from '@/lib/utils/numberToWords'
 import { formatOrdinalDate } from '@/lib/utils/format'
 
+// Helvetica (the PDF default font) has no glyph for the Naira sign (₦),
+// so it renders as a broken/garbled character. Noto Sans includes it.
+const fontsBaseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+Font.register({
+  family: 'NotoSans',
+  fonts: [
+    { src: `${fontsBaseUrl}/fonts/NotoSans-Regular.ttf`, fontWeight: 'normal' },
+    { src: `${fontsBaseUrl}/fonts/NotoSans-Bold.ttf`, fontWeight: 'bold' },
+  ],
+})
+
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'NotoSans',
     fontSize: 10.5,
     paddingTop: 40,
     paddingBottom: 70,
@@ -32,7 +43,8 @@ const styles = StyleSheet.create({
   },
   orgName: {
     fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSans',
+    fontWeight: 'bold',
     color: '#1a1a2e',
     textAlign: 'center',
   },
@@ -74,14 +86,16 @@ const styles = StyleSheet.create({
   },
   subject: {
     fontSize: 10.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSans',
+    fontWeight: 'bold',
     textDecoration: 'underline',
     marginBottom: 4,
     lineHeight: 1.4,
   },
   noticeTitle: {
     fontSize: 10.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSans',
+    fontWeight: 'bold',
     textDecoration: 'underline',
     marginBottom: 12,
   },
@@ -92,7 +106,8 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
   },
   boldInline: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSans',
+    fontWeight: 'bold',
   },
   closing: {
     fontSize: 10.5,
