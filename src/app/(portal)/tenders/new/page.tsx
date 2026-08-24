@@ -12,6 +12,7 @@ import { Briefcase, Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { logAudit } from '@/lib/utils/notify'
+import { capitalizeFirst } from '@/lib/utils/format'
 
 export default function NewTenderPage() {
   const router = useRouter()
@@ -36,9 +37,9 @@ export default function NewTenderPage() {
       const { data: tenderRaw, error } = await supabase
         .from('tenders')
         .insert({
-          title: title.trim(),
-          description: description.trim(),
-          requirements: requirements.trim() || null,
+          title: capitalizeFirst(title),
+          description: capitalizeFirst(description),
+          requirements: requirements.trim() ? capitalizeFirst(requirements) : null,
           closing_date: closingDate ? new Date(closingDate).toISOString() : null,
           status: 'open',
           posted_by: user.id,
@@ -96,7 +97,7 @@ export default function NewTenderPage() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="e.g. Construction of Warehouse Facility"
-                className="h-12 text-base capitalize"
+                className="h-12 text-base"
                 required
               />
             </div>
@@ -107,7 +108,7 @@ export default function NewTenderPage() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Provide a detailed description of the contract scope, deliverables, and expectations..."
-                className="min-h-[140px] text-base resize-none capitalize"
+                className="min-h-[140px] text-base resize-none"
                 required
               />
             </div>
@@ -135,7 +136,7 @@ export default function NewTenderPage() {
               value={requirements}
               onChange={e => setRequirements(e.target.value)}
               placeholder="e.g. Must have CAC registration, minimum 5 years experience, evidence of similar projects..."
-              className="min-h-[100px] text-base resize-none capitalize"
+              className="min-h-[100px] text-base resize-none"
             />
           </CardContent>
         </Card>

@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { DEPARTMENTS, DEPARTMENT_LABELS } from '@/lib/constants'
 import type { Department } from '@/types/database'
 import { notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
+import { capitalizeFirst } from '@/lib/utils/format'
 
 export default function NewInternalProcurementPage() {
   const router = useRouter()
@@ -45,10 +46,10 @@ export default function NewInternalProcurementPage() {
       const { data, error } = await supabase.from('internal_procurement_requests').insert({
         department,
         requested_by: user.id,
-        item_description: itemDescription.trim(),
+        item_description: capitalizeFirst(itemDescription),
         quantity: qty,
         estimated_cost: cost,
-        reason: reason.trim(),
+        reason: capitalizeFirst(reason),
         status: 'submitted',
         md_reviewed_at: null,
         md_reviewed_by: null,
@@ -76,7 +77,7 @@ export default function NewInternalProcurementPage() {
         userId: s.id,
         type: 'proposal_submitted',
         title: 'New Procurement Request',
-        message: `A new procurement request "${itemDescription.trim()}" has been submitted.`,
+        message: `A new procurement request "${capitalizeFirst(itemDescription)}" has been submitted.`,
         referenceId: created.id,
         referenceType: 'internal_procurement',
       })))

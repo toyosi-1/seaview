@@ -14,6 +14,7 @@ import Link from 'next/link'
 import type { Contract } from '@/types/database'
 import { compressImage } from '@/lib/utils/compress'
 import { notify, logAudit } from '@/lib/utils/notify'
+import { capitalizeFirst } from '@/lib/utils/format'
 
 export default function NewCompletionPage() {
   const router = useRouter()
@@ -62,8 +63,8 @@ export default function NewCompletionPage() {
         .insert({
           contract_id: contractId,
           contractor_id: contractor.id,
-          title: title.trim(),
-          description: description.trim(),
+          title: capitalizeFirst(title),
+          description: capitalizeFirst(description),
           status: 'supervisor_review',
           submitted_at: new Date().toISOString(),
           supervisor_id: null,
@@ -163,11 +164,11 @@ export default function NewCompletionPage() {
           <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label className="text-base font-medium">Report Title *</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Warehouse Construction – Completion Report" className="h-12 text-base capitalize" required />
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Warehouse Construction – Completion Report" className="h-12 text-base" required />
             </div>
             <div className="space-y-2">
               <Label className="text-base font-medium">Description of Work Completed *</Label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what was accomplished, key milestones achieved, and any relevant details..." className="min-h-[120px] text-base resize-none capitalize" required />
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what was accomplished, key milestones achieved, and any relevant details..." className="min-h-[120px] text-base resize-none" required />
             </div>
           </CardContent>
         </Card>

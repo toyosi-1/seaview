@@ -63,6 +63,7 @@ export type NotificationType =
   | 'audit_rejected'
   | 'payment_completed'
   | 'payment_approved'
+  | 'completion_correction_requested'
 
 export interface Profile {
   [key: string]: unknown
@@ -232,7 +233,6 @@ export interface CompletionReport {
   supervisor_reviewed_at: string | null
   supervisor_reviewed_by: string | null
   supervisor_notes: string | null
-  correction_requested: boolean
   md_verified_at: string | null
   md_verified_by: string | null
   audit_reviewed_at: string | null
@@ -241,6 +241,8 @@ export interface CompletionReport {
   accounts_reviewed_at: string | null
   accounts_reviewed_by: string | null
   rejection_reason: string | null
+  correction_requested: boolean
+  correction_reason: string | null
   created_at: string
   updated_at: string
   contracts?: Contract

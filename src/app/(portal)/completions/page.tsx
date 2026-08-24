@@ -75,11 +75,15 @@ export default async function CompletionsPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <Badge className={COMPLETION_STATUS_COLORS[status]}>
-                        {p.role === 'contractor'
-                          ? (CONTRACTOR_COMPLETION_STATUS_LABELS[status] ?? COMPLETION_STATUS_LABELS[status])
-                          : COMPLETION_STATUS_LABELS[status]}
-                      </Badge>
+                      {cr.correction_requested ? (
+                        <Badge className="bg-spl-warning-bg text-spl-warning">Correction Needed</Badge>
+                      ) : (
+                        <Badge className={COMPLETION_STATUS_COLORS[status]}>
+                          {p.role === 'contractor'
+                            ? (CONTRACTOR_COMPLETION_STATUS_LABELS[status] ?? COMPLETION_STATUS_LABELS[status])
+                            : COMPLETION_STATUS_LABELS[status]}
+                        </Badge>
+                      )}
                       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
                     </div>
                   </Link>

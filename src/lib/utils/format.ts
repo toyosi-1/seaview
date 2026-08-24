@@ -48,3 +48,10 @@ export function truncate(str: string, length: number): string {
   if (str.length <= length) return str
   return str.slice(0, length) + '...'
 }
+
+/** Capitalizes only the first letter of a string, leaving the rest untouched. */
+export function capitalizeFirst(str: string): string {
+  const trimmed = str.trim()
+  if (!trimmed) return trimmed
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+}

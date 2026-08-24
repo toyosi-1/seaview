@@ -11,6 +11,7 @@ import { CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { InternalProcurementRequest, Profile, InternalProcurementStatus } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
+import { INTERNAL_PROCUREMENT_STATUS_LABELS } from '@/lib/constants'
 
 interface Action {
   label: string
@@ -80,7 +81,7 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
         userId: request.requested_by,
         type: selected.nextStatus === 'rejected' ? 'proposal_rejected' : 'proposal_approved',
         title: selected.nextStatus === 'rejected' ? 'Procurement Request Rejected' : 'Procurement Request Updated',
-        message: `Your request "${request.item_description}" has been ${selected.label.toLowerCase()}.`,
+        message: `Your request "${request.item_description}" status: ${INTERNAL_PROCUREMENT_STATUS_LABELS[selected.nextStatus]}.`,
         referenceId: request.id,
         referenceType: 'internal_procurement',
       })

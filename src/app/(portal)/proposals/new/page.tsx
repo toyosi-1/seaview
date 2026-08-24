@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { compressImage, compressFiles } from '@/lib/utils/compress'
 import { notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
+import { capitalizeFirst } from '@/lib/utils/format'
 
 interface TenderOption {
   id: string
@@ -116,8 +117,8 @@ function NewProposalContent() {
         .insert({
           contractor_id: contractor.id,
           tender_id: selectedTenderId,
-          title: title.trim(),
-          description: description.trim(),
+          title: capitalizeFirst(title),
+          description: capitalizeFirst(description),
           estimated_cost: estimatedCostValue,
           status: 'submitted',
           current_stage: 'md_review',
@@ -282,7 +283,7 @@ function NewProposalContent() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="e.g. Construction of Warehouse Facility"
-                className="h-12 text-base capitalize"
+                className="h-12 text-base"
                 required
               />
             </div>
@@ -293,7 +294,7 @@ function NewProposalContent() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Provide a detailed description of the proposed work, scope, timeline, and deliverables..."
-                className="min-h-[140px] text-base resize-none capitalize"
+                className="min-h-[140px] text-base resize-none"
                 required
               />
             </div>

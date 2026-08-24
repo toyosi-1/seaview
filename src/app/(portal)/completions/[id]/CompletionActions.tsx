@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, ArrowRight, RotateCcw, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { CompletionReport, Profile, CompletionStatus } from '@/types/database'
+import type { CompletionReport, Profile, CompletionStatus, UserRole } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
 import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS } from '@/lib/constants'
 
@@ -18,26 +18,48 @@ interface Action {
   nextStatus: CompletionStatus
   color: string
   icon: React.ElementType
+  isCorrection?: boolean
+}
+
+const CORRECTION_ACTION: Action = {
+  label: 'Return for Correction',
+  nextStatus: 'submitted', // unused when isCorrection is true — status does not change
+  color: 'bg-spl-warning hover:bg-spl-warning-dark',
+  icon: RotateCcw,
+  isCorrection: true,
 }
 
 function getActions(status: CompletionStatus, role: string, isSupervisor: boolean): Action[] {
   if ((status === 'submitted' || status === 'supervisor_review') && isSupervisor) return [
     { label: 'Approve & Forward to MD', nextStatus: 'md_verification', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    CORRECTION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'md_verification' && role === 'md') return [
     { label: 'Verify & Forward to Audit', nextStatus: 'audit_review', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    CORRECTION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'audit_review' && role === 'head_of_audit') return [
     { label: 'Approve & Forward to Accounts', nextStatus: 'accounts_review', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    CORRECTION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'accounts_review' && role === 'head_of_accounts') return [
     { label: 'Payment Made', nextStatus: 'payment_completed', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    CORRECTION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   return []
+}
+
+// Role responsible for reviewing at each status — used to notify the correct
+// staff member(s) when a contractor resubmits after a correction request.
+export function reviewerRoleForStatus(status: CompletionStatus): UserRole | null {
+  if (status === 'md_verification') return 'md'
+  if (status === 'audit_review') return 'head_of_audit'
+  if (status === 'accounts_review') return 'head_of_accounts'
+  return null
 }
 
 interface CompletionActionsProps {
@@ -54,7 +76,7 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
 
   const isSupervisor = !!projectSupervisorId && projectSupervisorId === profile.id
   const actions = getActions(completion.status, profile.role, isSupervisor)
-  if (actions.length === 0) return null
+  if (actions.length === 0 || completion.correction_requested) return null
 
   async function handleAction() {
     if (!selected) return
@@ -62,6 +84,47 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
     try {
       const supabase = createClient()
       const now = new Date().toISOString()
+
+      // Return for Correction: status stays the same, just flags the report
+      // as needing contractor attention.
+      if (selected.isCorrection) {
+        const { error } = await supabase
+          .from('completion_reports')
+          .update({ correction_requested: true, correction_reason: comment } as Partial<CompletionReport>)
+          .eq('id', completion.id)
+        if (error) throw error
+
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: 'Returned for Correction',
+          entityType: 'completion_report',
+          entityId: completion.id,
+          previousStatus: completion.status,
+          newStatus: completion.status,
+        })
+
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', completion.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          await notify({
+            userId: contractor.user_id,
+            type: 'completion_correction_requested',
+            title: 'Correction Requested on Completion Report',
+            message: `Your completion report "${completion.title}" needs correction: ${comment}`,
+            referenceId: completion.id,
+            referenceType: 'completion',
+          })
+        }
+
+        toast.success('Correction request sent to contractor')
+        setSelected(null)
+        setComment('')
+        router.refresh()
+        return
+      }
+
       const update: Record<string, unknown> = { status: selected.nextStatus }
 
       if (completion.status === 'submitted' || completion.status === 'supervisor_review') {

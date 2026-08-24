@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { CompletionActions } from './CompletionActions'
+import { ResubmitCompletion } from './ResubmitCompletion'
 import { ArrowLeft, FileText, Image as ImageIcon, Banknote } from 'lucide-react'
 import { COMPLETION_STATUS_LABELS, CONTRACTOR_COMPLETION_STATUS_LABELS, INTERNAL_ROLES, COMPLETION_STATUS_COLORS } from '@/lib/constants'
 import { formatDateTime, formatCurrency } from '@/lib/utils/format'
@@ -73,6 +74,12 @@ export default async function CompletionDetailPage({ params }: PageProps) {
                 <div className="mt-4 p-4 bg-spl-danger-bg rounded-xl border border-red-100">
                   <p className="text-sm font-semibold text-spl-danger mb-1">Rejection Reason</p>
                   <p className="text-sm text-spl-danger">{report.rejection_reason}</p>
+                </div>
+              )}
+              {report.correction_requested && report.correction_reason && (
+                <div className="mt-4 p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
+                  <p className="text-sm font-semibold text-spl-warning mb-1">Correction Requested</p>
+                  <p className="text-sm text-spl-warning">{report.correction_reason}</p>
                 </div>
               )}
               {report.audit_comment && INTERNAL_ROLES.includes(p.role) && (
@@ -172,8 +179,18 @@ export default async function CompletionDetailPage({ params }: PageProps) {
           )}
 
           {/* Actions for internal staff */}
-          {INTERNAL_ROLES.includes(p.role) && (
+          {INTERNAL_ROLES.includes(p.role) && !report.correction_requested && (
             <CompletionActions completion={report} profile={p} projectSupervisorId={projectSupervisorId} />
+          )}
+          {INTERNAL_ROLES.includes(p.role) && report.correction_requested && (
+            <div className="p-5 bg-spl-warning-bg rounded-2xl border border-amber-100">
+              <p className="text-sm font-semibold text-spl-warning">Awaiting contractor&apos;s response to the correction request.</p>
+            </div>
+          )}
+
+          {/* Resubmit — contractor only, when a correction was requested */}
+          {isContractor && report.correction_requested && (
+            <ResubmitCompletion completion={report} profile={p} projectSupervisorId={projectSupervisorId} />
           )}
 
           {/* Workflow guide for contractors */}
