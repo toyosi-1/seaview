@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/completions', label: 'Project Completions', icon: ClipboardList },
   { href: '/internal-procurement', label: 'Internal Procurement', icon: ShoppingCart, roles: STAFF_ROLE_LIST },
   { href: '/audit', label: 'Audit Reviews', icon: ShieldCheck, roles: ['head_of_audit', 'md', 'ict_admin'] },
-  { href: '/payments', label: 'Payments', icon: Banknote, roles: ['head_of_accounts', 'ict_admin', 'contractor'] },
+  { href: '/payments', label: 'Payments', icon: Banknote, roles: ['head_of_accounts', 'contractor'] },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/audit-log', label: 'Audit Log', icon: ScrollText, roles: ['md', 'ict_admin'] },
   { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ict_admin'] },

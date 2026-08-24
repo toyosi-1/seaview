@@ -20,8 +20,8 @@ export default async function PaymentDetailPage({ params }: PageProps) {
   if (!profile) redirect('/login')
   const p = profile as Profile
 
-  // Only contractors, head of accounts, and ICT admin should access payments
-  if (!['contractor', 'head_of_accounts', 'ict_admin'].includes(p.role)) {
+  // Only contractors and head of accounts should access payments
+  if (!['contractor', 'head_of_accounts'].includes(p.role)) {
     redirect('/dashboard')
   }
 

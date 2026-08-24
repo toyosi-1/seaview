@@ -11,6 +11,7 @@ import { CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CompletionReport, Profile, CompletionStatus } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
+import { COMPLETION_STATUS_LABELS } from '@/lib/constants'
 
 interface Action {
   label: string
@@ -171,7 +172,7 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
             userId: s.id,
             type: 'completion_submitted',
             title: 'Completion Report Requires Your Action',
-            message: `Completion report "${completion.title}" is now in ${selected.nextStatus.replace(/_/g, ' ')} stage.`,
+            message: `Completion report "${completion.title}" is now in the ${COMPLETION_STATUS_LABELS[selected.nextStatus]} stage.`,
             referenceId: completion.id,
             referenceType: 'completion',
           })))

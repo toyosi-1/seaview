@@ -196,7 +196,7 @@ export default async function DashboardPage() {
               href="/completions"
               urgent={completionCount > 0}
             />
-            {['head_of_accounts', 'ict_admin'].includes(p.role) && (
+            {p.role === 'head_of_accounts' && (
               <StatCard
                 title="Payments Pending"
                 value={paymentPendingCount}
@@ -258,7 +258,7 @@ export default async function DashboardPage() {
         <PendingActionsWidget actions={[
           { label: 'Quotations awaiting approval', count: pendingApprovalCount, href: '/proposals', urgent: true },
           { label: 'Completion reports awaiting verification', count: completionCount, href: '/completions', urgent: true },
-          ...(p.role === 'head_of_accounts' || p.role === 'ict_admin'
+          ...(p.role === 'head_of_accounts'
             ? [{ label: 'Payments pending approval', count: paymentPendingCount, href: '/payments', urgent: true }]
             : []),
         ]} />

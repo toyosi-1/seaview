@@ -74,7 +74,8 @@ export function TopBar({ profile }: { profile: Profile }) {
       if (isContractor && contractorId) contractsQuery = contractsQuery.eq('contractor_id', contractorId)
       contractsQuery = contractsQuery.limit(5)
 
-      const paymentsQuery = isContractor
+      const canSeePayments = profile.role === 'contractor' || profile.role === 'head_of_accounts'
+      const paymentsQuery = !canSeePayments
         ? Promise.resolve({ data: [] as unknown[] })
         : supabase.from('payments').select('id,payment_number').ilike('payment_number', `%${q}%`).limit(5)
 

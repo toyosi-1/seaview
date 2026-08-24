@@ -163,6 +163,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
                     completionPeriod={c.completion_period ?? undefined}
                     mdName={mdProfile?.full_name ?? 'Managing Director'}
                     mdSignatureUrl={mdProfile?.signature_url ?? undefined}
+                    responsibleDepartment={c.responsible_department ? DEPARTMENT_LABELS[c.responsible_department] : undefined}
                   />
                 </>
               ) : (

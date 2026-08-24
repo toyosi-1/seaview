@@ -155,6 +155,7 @@ interface AwardLetterData {
   completionPeriod?: string
   mdName?: string
   mdSignatureUrl?: string
+  responsibleDepartment?: string
 }
 
 const VAT_RATE = 7.5
@@ -168,6 +169,13 @@ const npaLogoSrc = typeof window !== 'undefined'
   ? `${window.location.origin}/brand/npa-logo-full.png`
   : '/brand/npa-logo-full.png'
 
+function formatDepartmentList(department: string): string {
+  const base = ['Procurement', 'Audit']
+  const departments = base.includes(department) ? base : [...base, department]
+  if (departments.length === 2) return departments.join(' and ')
+  return `${departments.slice(0, -1).join(', ')} and ${departments[departments.length - 1]}`
+}
+
 function AwardLetterDoc({ data }: { data: AwardLetterData }) {
   const formattedValue = new Intl.NumberFormat('en-NG', {
     style: 'currency',
@@ -175,7 +183,9 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
   }).format(data.contractValue)
 
   const valueInWords = nairaToWords(data.contractValue)
-  const completionPeriod = data.completionPeriod?.trim() || 'a period to be agreed with the Head, Environment'
+  const department = data.responsibleDepartment?.trim() || 'Environment'
+  const departmentList = formatDepartmentList(department)
+  const completionPeriod = data.completionPeriod?.trim() || `a period to be agreed with the Head, ${department}`
 
   return (
     <Document>
@@ -215,7 +225,7 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
         <Text style={styles.noticeTitle}>NOTIFICATION OF AWARD</Text>
 
         <Text style={styles.bodyText}>
-          This is to convey the Management of Seaview Properties Limited approval of {formatOrdinalDate(data.awardDate)} in respect of your bid{data.bidDate ? ` dated ${formatOrdinalDate(data.bidDate)}` : ''} for the {data.contractTitle} at a contract sum of {formattedValue} ({valueInWords}) inclusive of {VAT_RATE}% VAT, with a completion period of {completionPeriod} from the date of acceptance of this offer.
+          This is to convey the approval of the Management of Seaview Properties Limited, dated {formatOrdinalDate(data.awardDate)}, in respect of your bid{data.bidDate ? ` dated ${formatOrdinalDate(data.bidDate)}` : ''} for the {data.contractTitle} at a contract sum of {formattedValue} ({valueInWords}) inclusive of {VAT_RATE}% VAT, with a completion period of {completionPeriod} from the date of acceptance of this offer.
         </Text>
 
         <Text style={styles.bodyText}>
@@ -223,11 +233,11 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
         </Text>
 
         <Text style={styles.bodyText}>
-          The work shall be executed in accordance with the given specification as detailed in the tender document (copy attached). In this regard, you are required to contact the Head, Environment who will nominate an officer to supervise the Job. The representatives of Procurement, Audit and Environment Departments shall witness the completion of the Job.
+          The work shall be executed in accordance with the given specification as detailed in the tender document (copy attached). In this regard, you are required to contact the Head, {department} who will nominate an officer to supervise the job. The representatives of the {departmentList} Departments shall witness completion of the job.
         </Text>
 
         <Text style={styles.bodyText}>
-          Payment of the Contract sum shall be made upon satisfactory performance and upon certification by the Head Procurement, Audit and Environment Departments.
+          Payment of the Contract sum shall be made upon satisfactory performance and upon certification by the Heads of {departmentList} Departments.
         </Text>
 
         <Text style={styles.bodyText}>
@@ -235,7 +245,7 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
         </Text>
 
         <Text style={styles.bodyText}>
-          Kindly indicate your acceptance of this offer or otherwise within Seven (7) days of the receipt of this letter after which the offer shall lapse.
+          Kindly indicate your acceptance of this offer or otherwise within seven (7) days of receipt of this letter, after which the offer shall lapse.
         </Text>
 
         <Text style={styles.closing}>Yours faithfully,</Text>
