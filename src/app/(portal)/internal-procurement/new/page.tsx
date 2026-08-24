@@ -56,6 +56,8 @@ export default function NewInternalProcurementPage() {
         procurement_reviewed_at: null,
         procurement_reviewed_by: null,
         rejection_reason: null,
+        clarification_requested: false,
+        clarification_reason: null,
       }).select().maybeSingle()
       if (error) throw error
       if (!data) throw new Error('Failed to create procurement request')

@@ -93,9 +93,13 @@ export default async function InternalProcurementPage() {
                       <p className="text-base font-bold text-slate-700 hidden md:block">
                         {formatCurrency(req.estimated_cost)}
                       </p>
-                      <Badge className={INTERNAL_PROCUREMENT_STATUS_COLORS[status]}>
-                        {INTERNAL_PROCUREMENT_STATUS_LABELS[status]}
-                      </Badge>
+                      {req.clarification_requested ? (
+                        <Badge className="bg-spl-warning-bg text-spl-warning">Clarification Needed</Badge>
+                      ) : (
+                        <Badge className={INTERNAL_PROCUREMENT_STATUS_COLORS[status]}>
+                          {INTERNAL_PROCUREMENT_STATUS_LABELS[status]}
+                        </Badge>
+                      )}
                       <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
                     </div>
                   </Link>

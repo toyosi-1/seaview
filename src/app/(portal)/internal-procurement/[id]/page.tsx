@@ -9,6 +9,7 @@ import { ArrowLeft, ShoppingCart, Calendar } from 'lucide-react'
 import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
 import { InternalProcurementActions } from './InternalProcurementActions'
+import { ResubmitInternalProcurement } from './ResubmitInternalProcurement'
 import type { Profile, InternalProcurementRequest, InternalProcurementStatus, UserRole } from '@/types/database'
 
 interface PageProps { params: Promise<{ id: string }> }
@@ -87,10 +88,26 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
                   <p className="text-sm text-spl-danger">{req.rejection_reason}</p>
                 </div>
               )}
+              {req.clarification_requested && req.clarification_reason && (
+                <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
+                  <p className="text-sm font-semibold text-spl-warning mb-1">Clarification Requested</p>
+                  <p className="text-sm text-spl-warning">{req.clarification_reason}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <InternalProcurementActions request={req} profile={p} />
+          {!req.clarification_requested && (
+            <InternalProcurementActions request={req} profile={p} />
+          )}
+          {req.clarification_requested && req.requested_by !== p.id && (
+            <div className="p-5 bg-spl-warning-bg rounded-2xl border border-amber-100">
+              <p className="text-sm font-semibold text-spl-warning">Awaiting the requester&apos;s response to the clarification request.</p>
+            </div>
+          )}
+          {req.clarification_requested && req.requested_by === p.id && (
+            <ResubmitInternalProcurement request={req} profile={p} />
+          )}
         </div>
 
         <div>

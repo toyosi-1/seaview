@@ -64,6 +64,7 @@ export type NotificationType =
   | 'payment_completed'
   | 'payment_approved'
   | 'completion_correction_requested'
+  | 'procurement_clarification_requested'
 
 export interface Profile {
   [key: string]: unknown
@@ -344,6 +345,8 @@ export interface InternalProcurementRequest {
   procurement_reviewed_at: string | null
   procurement_reviewed_by: string | null
   rejection_reason: string | null
+  clarification_requested: boolean
+  clarification_reason: string | null
   created_at: string
   updated_at: string
   profiles?: Profile

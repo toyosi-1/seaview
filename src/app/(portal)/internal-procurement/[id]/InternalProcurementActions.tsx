@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, ArrowRight, RotateCcw, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { InternalProcurementRequest, Profile, InternalProcurementStatus } from '@/types/database'
+import type { InternalProcurementRequest, Profile, InternalProcurementStatus, UserRole } from '@/types/database'
 import { notify, notifyMany, logAudit, getStaffByRole } from '@/lib/utils/notify'
 import { INTERNAL_PROCUREMENT_STATUS_LABELS } from '@/lib/constants'
 
@@ -18,18 +18,37 @@ interface Action {
   nextStatus: InternalProcurementStatus
   color: string
   icon: React.ElementType
+  isClarification?: boolean
+}
+
+const CLARIFICATION_ACTION: Action = {
+  label: 'Return for Clarification',
+  nextStatus: 'submitted', // unused when isClarification is true — status does not change
+  color: 'bg-spl-warning hover:bg-spl-warning-dark',
+  icon: RotateCcw,
+  isClarification: true,
 }
 
 function getActions(status: InternalProcurementStatus, role: string): Action[] {
   if (status === 'submitted' && role === 'md') return [
     { label: 'Approve & Forward to Procurement', nextStatus: 'procurement_review', color: 'bg-spl-blue hover:bg-spl-blue-dark', icon: ArrowRight },
+    CLARIFICATION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   if (status === 'procurement_review' && role === 'head_of_procurement') return [
     { label: 'Approve Purchase', nextStatus: 'approved', color: 'bg-spl-success hover:bg-spl-success-dark', icon: CheckCircle },
+    CLARIFICATION_ACTION,
     { label: 'Reject', nextStatus: 'rejected', color: 'bg-spl-danger hover:bg-spl-danger-dark', icon: XCircle },
   ]
   return []
+}
+
+// Role responsible for reviewing at each status — used to notify the correct
+// staff member when the requester resubmits after a clarification request.
+export function reviewerRoleForStatus(status: InternalProcurementStatus): UserRole | null {
+  if (status === 'submitted') return 'md'
+  if (status === 'procurement_review') return 'head_of_procurement'
+  return null
 }
 
 export function InternalProcurementActions({ request, profile }: { request: InternalProcurementRequest; profile: Profile }) {
@@ -39,7 +58,7 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
   const [loading, setLoading] = useState(false)
 
   const actions = getActions(request.status, profile.role)
-  if (actions.length === 0) return null
+  if (actions.length === 0 || request.clarification_requested) return null
 
   async function handleAction() {
     if (!selected) return
@@ -47,6 +66,42 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
     try {
       const supabase = createClient()
       const now = new Date().toISOString()
+
+      // Return for Clarification: status stays the same, just flags the
+      // request as needing the requester's attention.
+      if (selected.isClarification) {
+        const { error } = await supabase
+          .from('internal_procurement_requests')
+          .update({ clarification_requested: true, clarification_reason: comment } as Partial<InternalProcurementRequest>)
+          .eq('id', request.id)
+        if (error) throw error
+
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: 'Returned for Clarification',
+          entityType: 'internal_procurement_request',
+          entityId: request.id,
+          previousStatus: request.status,
+          newStatus: request.status,
+        })
+
+        await notify({
+          userId: request.requested_by,
+          type: 'procurement_clarification_requested',
+          title: 'Clarification Requested on Procurement Request',
+          message: `Your request "${request.item_description}" needs clarification: ${comment}`,
+          referenceId: request.id,
+          referenceType: 'internal_procurement',
+        })
+
+        toast.success('Clarification request sent to requester')
+        setSelected(null)
+        setComment('')
+        router.refresh()
+        return
+      }
+
       const update: Record<string, unknown> = { status: selected.nextStatus }
 
       if (request.status === 'submitted') {
@@ -115,13 +170,13 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
       <div className="p-5 bg-slate-50 rounded-2xl space-y-4 border border-slate-200">
         <h3 className="font-bold text-slate-800 text-base">Your Action Required</h3>
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-slate-600">Comment {selected?.nextStatus === 'rejected' ? '*' : '(optional)'}</Label>
+          <Label className="text-sm font-medium text-slate-600">Comment {selected?.nextStatus === 'rejected' || selected?.isClarification ? '*' : '(optional)'}</Label>
           <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Add your review comments..." className="min-h-[90px] bg-white resize-none text-base" />
         </div>
         <div className="flex flex-wrap gap-2">
           {actions.map(a => {
             const Icon = a.icon
-            const disabled = a.nextStatus === 'rejected' && !comment.trim()
+            const disabled = (a.nextStatus === 'rejected' || a.isClarification) && !comment.trim()
             return (
               <Button key={a.label} type="button" onClick={() => setSelected(a)} disabled={disabled} size="lg" className={`text-white h-11 ${a.color} disabled:opacity-40`}>
                 <Icon className="w-4 h-4 mr-2" />{a.label}

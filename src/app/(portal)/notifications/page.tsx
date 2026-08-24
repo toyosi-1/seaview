@@ -12,6 +12,7 @@ const TYPE_COLORS: Record<string, string> = {
   proposal_rejected: 'bg-spl-danger-bg text-spl-danger',
   proposal_returned: 'bg-spl-warning-bg text-spl-warning',
   completion_correction_requested: 'bg-spl-warning-bg text-spl-warning',
+  procurement_clarification_requested: 'bg-spl-warning-bg text-spl-warning',
   contract_awarded: 'bg-purple-100 text-purple-800',
   payment_completed: 'bg-emerald-100 text-emerald-800',
   default: 'bg-slate-100 text-slate-800',
