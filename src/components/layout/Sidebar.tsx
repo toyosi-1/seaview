@@ -36,16 +36,22 @@ interface NavItem {
   roles?: string[]
 }
 
+// All staff roles, incl. the Procurement Officer (contract_officer) who manages tenders
 const STAFF_ROLE_LIST = ['md', 'head_of_procurement', 'head_of_environment', 'head_of_ict', 'head_of_audit', 'head_of_accounts', 'ict_admin', 'contract_officer']
+
+// Roles with database-level (RLS) read access to contractors, contracts, and completion
+// reports — mirrors the is_internal_staff() Postgres function. contract_officer is
+// intentionally excluded here: they only have DB access to tenders and quotations.
+const INTERNAL_STAFF_ROLES = ['md', 'head_of_procurement', 'head_of_environment', 'head_of_ict', 'head_of_audit', 'head_of_accounts', 'ict_admin']
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/contractors', label: 'Contractors', icon: Building2, roles: STAFF_ROLE_LIST },
+  { href: '/contractors', label: 'Contractors', icon: Building2, roles: INTERNAL_STAFF_ROLES },
   { href: '/contractor-profile', label: 'My Profile', icon: Building2, roles: ['contractor'] },
   { href: '/tenders', label: 'Available Contracts', icon: Briefcase },
-  { href: '/contracts', label: 'Awarded Contracts', icon: FileText },
+  { href: '/contracts', label: 'Awarded Contracts', icon: FileText, roles: [...INTERNAL_STAFF_ROLES, 'contractor'] },
   { href: '/proposals', label: 'Quotations', icon: ClipboardList },
-  { href: '/completions', label: 'Project Completions', icon: ClipboardList },
+  { href: '/completions', label: 'Project Completions', icon: ClipboardList, roles: [...INTERNAL_STAFF_ROLES, 'contractor'] },
   { href: '/internal-procurement', label: 'Internal Procurement', icon: ShoppingCart, roles: STAFF_ROLE_LIST },
   { href: '/audit', label: 'Audit Reviews', icon: ShieldCheck, roles: ['head_of_audit', 'md', 'ict_admin'] },
   { href: '/payments', label: 'Payments', icon: Banknote, roles: ['head_of_accounts', 'contractor'] },

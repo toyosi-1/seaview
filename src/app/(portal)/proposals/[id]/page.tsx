@@ -9,8 +9,9 @@ import { WorkflowTimeline } from '@/components/proposals/WorkflowTimeline'
 import { ApprovalPanel } from '@/components/proposals/ApprovalPanel'
 import { ICTAssignmentPanel } from '@/components/proposals/ICTAssignmentPanel'
 import { AppraisalDocuments } from '@/components/proposals/AppraisalDocuments'
+import { ResubmitProposal } from './ResubmitProposal'
 import {
-  ArrowLeft, FileText, Building2, Calendar, DollarSign, MessageSquare
+  ArrowLeft, FileText, Building2, Calendar, MessageSquare
 } from 'lucide-react'
 import {
   PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS, INTERNAL_ROLES, ROLE_LABELS
@@ -102,7 +103,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-spl-success-bg flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-spl-success" />
+                    <span className="text-base font-bold text-spl-success leading-none">₦</span>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Estimated Cost</p>
@@ -239,6 +240,11 @@ export default async function ProposalDetailPage({ params }: PageProps) {
           {/* ICT Department Assignment */}
           {isInternal && status === 'ict_assignment' && (
             <ICTAssignmentPanel proposal={prop} profile={p} />
+          )}
+
+          {/* Resubmit — contractor only, when returned for clarification */}
+          {p.role === 'contractor' && status === 'returned' && (
+            <ResubmitProposal proposal={prop} profile={p} />
           )}
         </div>
 
