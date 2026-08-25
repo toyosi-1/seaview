@@ -1,0 +1,368 @@
+import { getSessionProfile } from '@/lib/supabase/session'
+import Link from 'next/link'
+import { StatCard } from '@/components/dashboard/StatCard'
+import { StatusBreakdown } from '@/components/dashboard/StatusBreakdown'
+import { PendingActionsWidget } from '@/components/dashboard/PendingActionsWidget'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  FileText,
+  CheckSquare,
+  Briefcase,
+  ClipboardList,
+  Banknote,
+  Building2,
+  ArrowRight,
+  Clock,
+} from 'lucide-react'
+import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS } from '@/lib/constants'
+import { formatCurrency, formatRelativeTime } from '@/lib/utils/format'
+import type { Profile, Proposal, ProposalStatus, CompletionReport } from '@/types/database'
+
+// This component performs all the dashboard's data fetching and is wrapped
+// in a <Suspense> boundary by the page, so the header above it can render
+// immediately instead of blocking on every Supabase query below.
+export async function DashboardContent() {
+  const { supabase, user, profile } = await getSessionProfile()
+  // user/profile are guaranteed non-null here — already enforced by the
+  // portal layout and the page before this component is rendered.
+  const p = profile as Profile
+  const isContractor = p.role === 'contractor'
+
+  let proposalCount = 0
+  let pendingApprovalCount = 0
+  let contractCount = 0
+  let completionCount = 0
+  let paymentPendingCount = 0
+  let contractorCount = 0
+  let recentActivity: Proposal[] = []
+
+  if (isContractor) {
+    const { data: contractorRaw } = await supabase
+      .from('contractors').select('id').eq('user_id', user!.id).maybeSingle()
+    const contractor = contractorRaw as unknown as { id: string } | null
+
+    if (contractor) {
+      const [{ count: pCount }, { count: cCount }, { data: recent }] = await Promise.all([
+        supabase.from('proposals').select('*', { count: 'exact', head: true }).eq('contractor_id', contractor.id),
+        supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('contractor_id', contractor.id),
+        supabase.from('proposals').select('*,contractors(company_name)').eq('contractor_id', contractor.id).order('created_at', { ascending: false }).limit(5),
+      ])
+      proposalCount = pCount ?? 0
+      contractCount = cCount ?? 0
+      recentActivity = (recent ?? []) as unknown as Proposal[]
+    }
+  }
+
+  let proposalStatusData: { status: ProposalStatus; count: number }[] = []
+
+  if (!isContractor) {
+    const [
+      { data: allStatuses },
+      { count: pPending },
+      { count: cAll },
+      { count: compCount },
+      { count: payPending },
+      { count: conCount },
+      { data: recent },
+    ] = await Promise.all([
+      // Fetching just the status column lets us derive both the total
+      // count and the per-status breakdown from a single round-trip,
+      // instead of a separate count(*) query plus 8 more count(*) queries.
+      supabase.from('proposals').select('status'),
+      supabase.from('proposals').select('*', { count: 'exact', head: true })
+        .in('status', ['submitted', 'md_review', 'procurement_appraisal', 'procurement_review', 'head_procurement_review', 'md_final_review', 'ict_assignment']),
+      supabase.from('contracts').select('*', { count: 'exact', head: true }),
+      supabase.from('completion_reports').select('*', { count: 'exact', head: true })
+        .in('status', ['submitted', 'supervisor_review', 'md_verification', 'audit_review', 'accounts_review']),
+      supabase.from('completion_reports').select('*', { count: 'exact', head: true }).in('status', ['accounts_review', 'payment_pending']),
+      supabase.from('contractors').select('*', { count: 'exact', head: true }),
+      supabase.from('proposals').select('*,contractors(company_name)').order('updated_at', { ascending: false }).limit(8),
+    ])
+
+    const statuses: ProposalStatus[] = ['submitted', 'md_review', 'procurement_appraisal', 'md_final_review', 'ict_assignment', 'approved', 'rejected', 'returned']
+    const counts = new Map<string, number>()
+    for (const row of (allStatuses ?? []) as { status: string }[]) {
+      counts.set(row.status, (counts.get(row.status) ?? 0) + 1)
+    }
+    proposalStatusData = statuses
+      .map(status => ({ status, count: counts.get(status) ?? 0 }))
+      .filter(d => d.count > 0)
+
+    proposalCount = allStatuses?.length ?? 0
+    pendingApprovalCount = pPending ?? 0
+    contractCount = cAll ?? 0
+    completionCount = compCount ?? 0
+    paymentPendingCount = payPending ?? 0
+    contractorCount = conCount ?? 0
+    recentActivity = (recent ?? []) as unknown as Proposal[]
+  }
+
+  // Completions awaiting the current user's review as Project Supervisor (staff only)
+  const { data: supervisorPendingRaw } = isContractor
+    ? { data: [] }
+    : await supabase
+        .from('completion_reports')
+        .select('*,contracts!inner(contract_number,project_supervisor_id),contractors(company_name)')
+        .eq('status', 'supervisor_review')
+        .eq('contracts.project_supervisor_id', user!.id)
+        .order('submitted_at', { ascending: false })
+  const supervisorPending = (supervisorPendingRaw ?? []) as unknown as (CompletionReport & {
+    contracts: { contract_number: string }
+    contractors: { company_name: string }
+  })[]
+
+  return (
+    <div className="space-y-8">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {isContractor ? (
+          <>
+            <StatCard
+              title="My Quotations"
+              value={proposalCount}
+              icon={FileText}
+              color="text-spl-blue"
+              bgColor="bg-spl-blue-light"
+              href="/proposals"
+            />
+            <StatCard
+              title="Awarded Contracts"
+              value={contractCount}
+              icon={Briefcase}
+              color="text-spl-success"
+              bgColor="bg-spl-success-bg"
+              href="/contracts"
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Quotations"
+              value={proposalCount}
+              icon={FileText}
+              color="text-spl-blue"
+              bgColor="bg-spl-blue-light"
+              href="/proposals"
+            />
+            <StatCard
+              title="Pending Approvals"
+              value={pendingApprovalCount}
+              icon={CheckSquare}
+              color="text-spl-warning"
+              bgColor="bg-spl-warning-bg"
+              href="/proposals?status=pending"
+              urgent={pendingApprovalCount > 0}
+            />
+            <StatCard
+              title="Contracts Awarded"
+              value={contractCount}
+              icon={Briefcase}
+              color="text-spl-success"
+              bgColor="bg-spl-success-bg"
+              href="/contracts"
+            />
+            <StatCard
+              title="Projects Awaiting Verification"
+              value={completionCount}
+              icon={ClipboardList}
+              color="text-slate-800"
+              bgColor="bg-spl-panel"
+              href="/completions"
+              urgent={completionCount > 0}
+            />
+            {p.role === 'head_of_accounts' && (
+              <StatCard
+                title="Payments Pending"
+                value={paymentPendingCount}
+                icon={Banknote}
+                color="text-spl-danger"
+                bgColor="bg-spl-danger-bg"
+                href="/payments"
+                urgent={paymentPendingCount > 0}
+              />
+            )}
+            <StatCard
+              title="Registered Contractors"
+              value={contractorCount}
+              icon={Building2}
+              color="text-slate-600"
+              bgColor="bg-slate-100"
+              href="/contractors"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Project Supervisor: Pending Completion Reviews */}
+      {supervisorPending.length > 0 && (
+        <Card className="border-0 shadow-sm border-l-4 border-l-spl-blue">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-spl-blue" />
+              Completion Reports Awaiting Your Review
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {supervisorPending.map(cr => (
+                <Link
+                  key={cr.id}
+                  href={`/completions/${cr.id}`}
+                  className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="w-5 h-5 text-spl-blue" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 truncate text-base">{cr.title}</p>
+                    <p className="text-sm text-slate-500 truncate">
+                      {cr.contracts?.contract_number} · {cr.contractors?.company_name} · {formatRelativeTime(cr.submitted_at)}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pending Actions Widget (staff only) */}
+      {!isContractor && (
+        <PendingActionsWidget actions={[
+          { label: 'Quotations awaiting approval', count: pendingApprovalCount, href: '/proposals', urgent: true },
+          { label: 'Completion reports awaiting verification', count: completionCount, href: '/completions', urgent: true },
+          ...(p.role === 'head_of_accounts'
+            ? [{ label: 'Payments pending approval', count: paymentPendingCount, href: '/payments', urgent: true }]
+            : []),
+        ]} />
+      )}
+
+      {/* Proposal Status Breakdown + Recent Activity (staff only) */}
+      {!isContractor && proposalStatusData.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-1">
+            <StatusBreakdown data={proposalStatusData} title="Quotation Status Overview" />
+          </div>
+          <div className="lg:col-span-2">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-slate-500" />
+                  Recent Activity
+                </CardTitle>
+                <Button asChild variant="ghost" size="sm" className="text-spl-blue hover:text-spl-blue-dark">
+                  <Link href="/proposals">
+                    View All <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {recentActivity.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                    <p className="text-base">No recent activity</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {recentActivity.map((proposal) => {
+                      const status = proposal.status as ProposalStatus
+                      return (
+                        <Link
+                          key={proposal.id}
+                          href={`/proposals/${proposal.id}`}
+                          className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-spl-blue" />
+                          </div>
+                          <div className="flex-1 min-w-[200px]">
+                            <p className="font-semibold text-slate-800 text-base leading-snug break-words">{proposal.title}</p>
+                            <p className="text-sm text-slate-500 break-words">
+                              {proposal.proposal_number} · {(proposal.contractors as { company_name?: string } | undefined)?.company_name ?? '—'} · {formatRelativeTime(proposal.updated_at)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-auto">
+                            <p className="text-base font-bold text-slate-700">
+                              {formatCurrency(proposal.estimated_cost)}
+                            </p>
+                            <Badge className={PROPOSAL_STATUS_COLORS[status]}>
+                              {PROPOSAL_STATUS_LABELS[status]}
+                            </Badge>
+                            <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity (contractor only) */}
+      {isContractor && (
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-slate-500" />
+              Recent Activity
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm" className="text-spl-blue hover:text-spl-blue-dark">
+              <Link href="/proposals">
+                View All <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <div className="text-center py-12 text-slate-400">
+                <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                <p className="text-base">No recent activity</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {recentActivity.map((proposal) => {
+                  const status = proposal.status as ProposalStatus
+                  const statusLabel = isContractor
+                    ? (CONTRACTOR_PROPOSAL_STATUS_LABELS[status] ?? PROPOSAL_STATUS_LABELS[status])
+                    : PROPOSAL_STATUS_LABELS[status]
+                  return (
+                    <Link
+                      key={proposal.id}
+                      href={`/proposals/${proposal.id}`}
+                      className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-spl-blue" />
+                      </div>
+                      <div className="flex-1 min-w-[200px]">
+                        <p className="font-semibold text-slate-800 text-base leading-snug break-words">{proposal.title}</p>
+                        <p className="text-sm text-slate-500 break-words">
+                          {proposal.proposal_number} · {(proposal.contractors as { company_name?: string } | undefined)?.company_name ?? '—'} · {formatRelativeTime(proposal.updated_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <p className="text-base font-bold text-slate-700">
+                          {formatCurrency(proposal.estimated_cost)}
+                        </p>
+                        <Badge className={PROPOSAL_STATUS_COLORS[status]}>
+                          {statusLabel}
+                        </Badge>
+                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

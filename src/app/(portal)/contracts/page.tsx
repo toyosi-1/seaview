@@ -5,34 +5,49 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Briefcase, ArrowRight, ClipboardList } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, Contract } from '@/types/database'
 
-export default async function ContractsPage() {
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function ContractsPage({ searchParams }: PageProps) {
   const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
 
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   let contracts: Contract[] = []
+  let totalCount = 0
 
   if (p.role === 'contractor') {
     const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
-      const { data } = await supabase
+      const { data, count } = await supabase
         .from('contracts')
-        .select('*,contractors(company_name)')
+        .select('*,contractors(company_name)', { count: 'exact' })
         .eq('contractor_id', contractor.id)
         .order('awarded_at', { ascending: false })
+        .range(from, to)
       contracts = (data ?? []) as unknown as Contract[]
+      totalCount = count ?? 0
     }
   } else {
-    const { data } = await supabase
+    const { data, count } = await supabase
       .from('contracts')
-      .select('*,contractors(company_name)')
+      .select('*,contractors(company_name)', { count: 'exact' })
       .order('awarded_at', { ascending: false })
+      .range(from, to)
     contracts = (data ?? []) as unknown as Contract[]
+    totalCount = count ?? 0
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   const statusColor = (s: string) =>
     s === 'active' ? 'bg-spl-success-bg text-spl-success' :
@@ -48,7 +63,7 @@ export default async function ContractsPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-slate-700">All Contracts ({contracts.length})</CardTitle>
+          <CardTitle className="text-lg font-semibold text-slate-700">All Contracts ({totalCount})</CardTitle>
         </CardHeader>
         <CardContent>
           {contracts.length === 0 ? (
@@ -103,6 +118,7 @@ export default async function ContractsPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/contracts" />
         </CardContent>
       </Card>
     </div>

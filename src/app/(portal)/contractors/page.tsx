@@ -6,9 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Building2, ArrowRight } from 'lucide-react'
 import { CONTRACTOR_STATUS_LABELS, CONTRACTOR_STATUS_COLORS, INTERNAL_ROLES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, Contractor, ContractorStatus } from '@/types/database'
 
-export default async function ContractorsPage() {
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function ContractorsPage({ searchParams }: PageProps) {
   const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
@@ -16,10 +19,19 @@ export default async function ContractorsPage() {
 
   if (!INTERNAL_ROLES.includes(p.role)) redirect('/dashboard')
 
-  const { data: contractors } = await supabase
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
+  const { data: contractors, count } = await supabase
     .from('contractors')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
+
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -33,7 +45,7 @@ export default async function ContractorsPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700">
-            All Contractors ({contractors?.length ?? 0})
+            All Contractors ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -70,6 +82,7 @@ export default async function ContractorsPage() {
               ))}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/contractors" />
         </CardContent>
       </Card>
     </div>

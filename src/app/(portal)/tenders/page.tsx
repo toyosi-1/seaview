@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Briefcase, Plus, ArrowRight, CalendarDays } from 'lucide-react'
 import { TENDER_STATUS_LABELS, TENDER_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, Tender, TenderStatus } from '@/types/database'
 
-export default async function TendersPage() {
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function TendersPage({ searchParams }: PageProps) {
   const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
@@ -18,17 +21,35 @@ export default async function TendersPage() {
   const isContractor = p.role === 'contractor'
   const isContractOfficer = p.role === 'contract_officer'
 
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   let query = supabase
     .from('tenders')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   if (isContractor) {
     query = query.eq('status', 'open')
   }
 
-  const { data: tendersRaw } = await query
+  const { data: tendersRaw, count } = await query
   const tenders = (tendersRaw ?? []) as unknown as Tender[]
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  // Status summary counts across ALL tenders (not just the current page)
+  let statusCounts: Record<string, number> = {}
+  if (!isContractor) {
+    const { data: allStatuses } = await supabase.from('tenders').select('status')
+    statusCounts = ((allStatuses ?? []) as { status: string }[]).reduce((acc, row) => {
+      acc[row.status] = (acc[row.status] ?? 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -57,7 +78,7 @@ export default async function TendersPage() {
       {!isContractor && (
         <div className="flex flex-wrap gap-2">
           {Object.entries(TENDER_STATUS_LABELS).map(([key, label]) => {
-            const count = tenders.filter(t => t.status === key).length
+            const count = statusCounts[key] ?? 0
             if (count === 0) return null
             return (
               <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${TENDER_STATUS_COLORS[key as TenderStatus]}`}>
@@ -71,7 +92,7 @@ export default async function TendersPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700">
-            All Contracts ({tenders.length})
+            All Contracts ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -118,6 +139,7 @@ export default async function TendersPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/tenders" />
         </CardContent>
       </Card>
     </div>

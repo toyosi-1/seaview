@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button'
 import { ShoppingCart, Plus, ArrowRight } from 'lucide-react'
 import { INTERNAL_PROCUREMENT_STATUS_LABELS, INTERNAL_PROCUREMENT_STATUS_COLORS, DEPARTMENT_LABELS, STAFF_ROLES, ROLE_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, InternalProcurementRequest, InternalProcurementStatus, UserRole } from '@/types/database'
 
-export default async function InternalProcurementPage() {
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function InternalProcurementPage({ searchParams }: PageProps) {
   const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
@@ -18,11 +21,26 @@ export default async function InternalProcurementPage() {
 
   const canReview = p.role === 'md' || p.role === 'head_of_procurement' || p.role === 'ict_admin'
 
-  const { data } = await supabase
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
+  const { data, count } = await supabase
     .from('internal_procurement_requests')
-    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,role)')
+    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,role)', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
   const requests = (data ?? []) as unknown as (InternalProcurementRequest & { profiles?: { full_name: string | null; role: UserRole } })[]
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  // Status summary counts across ALL requests (not just the current page)
+  const { data: allStatusRows } = await supabase.from('internal_procurement_requests').select('status')
+  const statusCounts = ((allStatusRows ?? []) as { status: string }[]).reduce((acc, row) => {
+    acc[row.status] = (acc[row.status] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -43,7 +61,7 @@ export default async function InternalProcurementPage() {
 
       <div className="flex flex-wrap gap-2">
         {Object.entries(INTERNAL_PROCUREMENT_STATUS_LABELS).map(([key, label]) => {
-          const count = requests.filter(r => r.status === key).length
+          const count = statusCounts[key] ?? 0
           if (count === 0) return null
           return (
             <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${INTERNAL_PROCUREMENT_STATUS_COLORS[key as InternalProcurementStatus]}`}>
@@ -56,7 +74,7 @@ export default async function InternalProcurementPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700">
-            All Requests ({requests.length})
+            All Requests ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -107,6 +125,7 @@ export default async function InternalProcurementPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/internal-procurement" />
         </CardContent>
       </Card>
     </div>

@@ -7,34 +7,58 @@ import { Button } from '@/components/ui/button'
 import { FileText, Plus, ArrowRight } from 'lucide-react'
 import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS, CONTRACTOR_PROPOSAL_STATUS_LABELS } from '@/lib/constants'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, Proposal, ProposalStatus } from '@/types/database'
 
-export default async function ProposalsPage() {
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function ProposalsPage({ searchParams }: PageProps) {
   const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
 
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   let proposals: Proposal[] = []
+  let totalCount = 0
+  let statusCounts: Record<string, number> = {}
 
   if (p.role === 'contractor') {
     const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
     const contractor = contractorRaw as unknown as { id: string } | null
     if (contractor) {
-      const { data } = await supabase
+      const { data, count } = await supabase
         .from('proposals')
-        .select('*,contractors(company_name)')
+        .select('*,contractors(company_name)', { count: 'exact' })
         .eq('contractor_id', contractor.id)
         .order('created_at', { ascending: false })
+        .range(from, to)
       proposals = (data ?? []) as unknown as Proposal[]
+      totalCount = count ?? 0
     }
   } else {
-    const { data } = await supabase
-      .from('proposals')
-      .select('*,contractors(company_name)')
-      .order('updated_at', { ascending: false })
+    const [{ data, count }, { data: allStatusRows }] = await Promise.all([
+      supabase
+        .from('proposals')
+        .select('*,contractors(company_name)', { count: 'exact' })
+        .order('updated_at', { ascending: false })
+        .range(from, to),
+      // Status summary counts across ALL proposals (not just the current page)
+      supabase.from('proposals').select('status'),
+    ])
     proposals = (data ?? []) as unknown as Proposal[]
+    totalCount = count ?? 0
+    statusCounts = ((allStatusRows ?? []) as { status: string }[]).reduce((acc, row) => {
+      acc[row.status] = (acc[row.status] ?? 0) + 1
+      return acc
+    }, {} as Record<string, number>)
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -59,7 +83,7 @@ export default async function ProposalsPage() {
       {p.role !== 'contractor' && (
         <div className="flex flex-wrap gap-2">
           {Object.entries(PROPOSAL_STATUS_LABELS).map(([key, label]) => {
-            const count = proposals.filter(pr => pr.status === key).length
+            const count = statusCounts[key] ?? 0
             if (count === 0) return null
             return (
               <span key={key} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-sm font-medium ${PROPOSAL_STATUS_COLORS[key as ProposalStatus]}`}>
@@ -73,7 +97,7 @@ export default async function ProposalsPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700">
-            All Quotations ({proposals.length})
+            All Quotations ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -126,6 +150,7 @@ export default async function ProposalsPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/proposals" />
         </CardContent>
       </Card>
     </div>
