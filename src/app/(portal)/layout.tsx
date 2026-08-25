@@ -9,10 +9,17 @@ export default async function PortalLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, profile } = await getSessionProfile()
+  const { supabase, user, profile } = await getSessionProfile()
 
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
+
+  // Deactivated users are blocked here rather than in middleware, since
+  // getSessionProfile already fetches the full profile — no extra round-trip.
+  if (!(profile as Profile).is_active) {
+    await supabase.auth.signOut()
+    redirect('/login?error=account_deactivated')
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50">

@@ -53,9 +53,14 @@ export default async function DashboardPage() {
       contractCount = cCount ?? 0
       recentActivity = (recent ?? []) as unknown as Proposal[]
     }
-  } else {
+  }
+
+  // Fetch proposal status breakdown for staff
+  let proposalStatusData: { status: ProposalStatus; count: number }[] = []
+
+  if (!isContractor) {
     const [
-      { count: pAll },
+      { data: allStatuses },
       { count: pPending },
       { count: cAll },
       { count: compCount },
@@ -63,7 +68,10 @@ export default async function DashboardPage() {
       { count: conCount },
       { data: recent },
     ] = await Promise.all([
-      supabase.from('proposals').select('*', { count: 'exact', head: true }),
+      // Fetching just the status column lets us derive both the total
+      // count and the per-status breakdown from a single round-trip,
+      // instead of a separate count(*) query plus 8 more count(*) queries.
+      supabase.from('proposals').select('status'),
       supabase.from('proposals').select('*', { count: 'exact', head: true })
         .in('status', ['submitted', 'md_review', 'procurement_appraisal', 'procurement_review', 'head_procurement_review', 'md_final_review', 'ict_assignment']),
       supabase.from('contracts').select('*', { count: 'exact', head: true }),
@@ -73,27 +81,23 @@ export default async function DashboardPage() {
       supabase.from('contractors').select('*', { count: 'exact', head: true }),
       supabase.from('proposals').select('*,contractors(company_name)').order('updated_at', { ascending: false }).limit(8),
     ])
-    proposalCount = pAll ?? 0
+
+    const statuses: ProposalStatus[] = ['submitted', 'md_review', 'procurement_appraisal', 'md_final_review', 'ict_assignment', 'approved', 'rejected', 'returned']
+    const counts = new Map<string, number>()
+    for (const row of (allStatuses ?? []) as { status: string }[]) {
+      counts.set(row.status, (counts.get(row.status) ?? 0) + 1)
+    }
+    proposalStatusData = statuses
+      .map(status => ({ status, count: counts.get(status) ?? 0 }))
+      .filter(d => d.count > 0)
+
+    proposalCount = allStatuses?.length ?? 0
     pendingApprovalCount = pPending ?? 0
     contractCount = cAll ?? 0
     completionCount = compCount ?? 0
     paymentPendingCount = payPending ?? 0
     contractorCount = conCount ?? 0
     recentActivity = (recent ?? []) as unknown as Proposal[]
-  }
-
-  // Fetch proposal status breakdown for staff
-  let proposalStatusData: { status: ProposalStatus; count: number }[] = []
-
-  if (!isContractor) {
-    const statuses: ProposalStatus[] = ['submitted', 'md_review', 'procurement_appraisal', 'md_final_review', 'ict_assignment', 'approved', 'rejected', 'returned']
-    const statusCounts = await Promise.all(
-      statuses.map(async s => {
-        const { count } = await supabase.from('proposals').select('*', { count: 'exact', head: true }).eq('status', s)
-        return { status: s, count: count ?? 0 }
-      })
-    )
-    proposalStatusData = statusCounts.filter(d => d.count > 0)
   }
 
   // Completions awaiting the current user's review as Project Supervisor (staff only)

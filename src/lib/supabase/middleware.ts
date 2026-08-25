@@ -53,21 +53,9 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Check if user is active (deactivated users are blocked)
-    if (user && !isPublicRoute) {
-      const { data: profile } = await withTimeout(
-        Promise.resolve(supabase.from('profiles').select('is_active').eq('id', user.id).maybeSingle()),
-        SUPABASE_TIMEOUT_MS
-      )
-
-      if (profile && !(profile as { is_active: boolean }).is_active) {
-        await supabase.auth.signOut()
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        url.searchParams.set('error', 'account_deactivated')
-        return NextResponse.redirect(url)
-      }
-    }
+    // Deactivated users are blocked — enforced in the portal layout (which
+    // already fetches the full profile via getSessionProfile) rather than
+    // here, to avoid a second Supabase round-trip on every navigation.
 
     if (user && pathname === '/') {
       const url = request.nextUrl.clone()
