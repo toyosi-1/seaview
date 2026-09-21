@@ -21,12 +21,12 @@ export default async function ContractorDetailPage({ params }: PageProps) {
   if (!profile) redirect('/login')
   const p = profile as Profile
 
-  const { data: contractor } = await supabase.from('contractors').select('*').eq('id', id).maybeSingle()
+  const [{ data: contractor }, { data: documents }] = await Promise.all([
+    supabase.from('contractors').select('*').eq('id', id).maybeSingle(),
+    supabase.from('contractor_documents').select('*').eq('contractor_id', id).order('created_at', { ascending: false }),
+  ])
   if (!contractor) notFound()
   const c = contractor as Contractor
-
-  const { data: documents } = await supabase
-    .from('contractor_documents').select('*').eq('contractor_id', id).order('created_at', { ascending: false })
 
   const isOwner = p.role === 'contractor' && c.user_id === user.id
   const isStaff = INTERNAL_ROLES.includes(p.role)

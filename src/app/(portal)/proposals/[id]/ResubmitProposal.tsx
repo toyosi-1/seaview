@@ -30,11 +30,19 @@ export function ResubmitProposal({ proposal, profile }: ResubmitProposalProps) {
     setLoading(true)
     try {
       const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
+      if (!user) throw new Error('Not authenticated')
+
+      const { data: contractorRaw } = await supabase.from('contractors').select('status').eq('user_id', user.id).maybeSingle()
+      const contractor = contractorRaw as unknown as { status: string } | null
+      if (contractor && contractor.status !== 'active') throw new Error('Your contractor account is suspended. You cannot resubmit quotations.')
+
       const resumeStage = proposal.current_stage as Proposal['status']
 
       const { error: updateError } = await supabase
         .from('proposals')
-        .update({ status: resumeStage, return_reason: null } as Partial<Proposal>)
+        .update({ status: resumeStage } as Partial<Proposal>)
         .eq('id', proposal.id)
       if (updateError) throw updateError
 
@@ -46,35 +54,48 @@ export function ResubmitProposal({ proposal, profile }: ResubmitProposalProps) {
         note: comment.trim(),
       })
 
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: 'Resubmitted for Review',
-        entityType: 'proposal',
-        entityId: proposal.id,
-        previousStatus: 'returned',
-        newStatus: resumeStage,
+      // Also record the contractor's clarification as a comment so staff
+      // can see it in the Internal Minutes & Comments section.
+      await supabase.from('proposal_comments').insert({
+        proposal_id: proposal.id,
+        author_id: profile.id,
+        stage: 'returned',
+        comment: comment.trim(),
+        action: 'resubmitted',
       })
 
-      const nextRole = resumeStage === 'md_review' ? 'md'
-        : resumeStage === 'procurement_appraisal' ? 'head_of_procurement'
-        : resumeStage === 'md_final_review' ? 'md'
-        : null
-      if (nextRole) {
-        const staff = await getStaffByRole(nextRole)
-        await notifyMany(staff.map(s => ({
-          userId: s.id,
-          type: 'proposal_forwarded',
-          title: 'Quotation Resubmitted',
-          message: `Quotation "${proposal.title}" was resubmitted and is back in the ${PROPOSAL_STATUS_LABELS[resumeStage]} stage.`,
-          referenceId: proposal.id,
-          referenceType: 'proposal',
-        })))
-      }
+      // Audit log + notifications are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: 'Resubmitted for Review',
+          entityType: 'proposal',
+          entityId: proposal.id,
+          previousStatus: 'returned',
+          newStatus: resumeStage,
+        })
+
+        const nextRole = resumeStage === 'md_review' ? 'md'
+          : resumeStage === 'procurement_appraisal' ? 'head_of_procurement'
+          : resumeStage === 'md_final_review' ? 'md'
+          : null
+        if (nextRole) {
+          const staff = await getStaffByRole(nextRole)
+          await notifyMany(staff.map(s => ({
+            userId: s.id,
+            type: 'proposal_forwarded',
+            title: 'Quotation Resubmitted',
+            message: `Quotation "${proposal.title}" was resubmitted and is back in the ${PROPOSAL_STATUS_LABELS[resumeStage]} stage.`,
+            referenceId: proposal.id,
+            referenceType: 'proposal',
+          })))
+        }
+      })()
 
       toast.success('Quotation resubmitted successfully')
       setComment('')
-      router.refresh()
+      router.push('/proposals')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to resubmit')
     } finally {

@@ -27,7 +27,8 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
     try {
       const supabase = createClient()
       const now = new Date().toISOString()
-      const update: Record<string, unknown> = { notes }
+      const update: Record<string, unknown> = {}
+      if (notes.trim()) update.notes = notes.trim()
 
       if (action === 'approve') {
         const taxDeductionValue = parseFloat(taxDeduction || '0')
@@ -68,37 +69,38 @@ export function PaymentActions({ payment, profile }: { payment: Payment; profile
         }
       }
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: action === 'approve' ? 'Approve & Process Payment' : action === 'hold' ? 'Put Payment On Hold' : 'Reject Payment',
-        entityType: 'payment',
-        entityId: payment.id,
-        previousStatus: payment.status,
-        newStatus: update.status as string,
-      })
-
-      // Notify contractor
-      const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', payment.contractor_id).maybeSingle()
-      const contractor = contractorRaw as unknown as { user_id: string } | null
-      if (contractor) {
-        const isCompleted = action === 'approve'
-        const isRejected = action === 'reject'
-        await notify({
-          userId: contractor.user_id,
-          type: isCompleted ? 'payment_completed' : isRejected ? 'proposal_rejected' : 'payment_approved',
-          title: isCompleted ? 'Payment Completed' : isRejected ? 'Payment Rejected' : 'Payment On Hold',
-          message: `Payment of ${formatCurrency(payment.amount)} for "${payment.contractors?.company_name ?? 'contract'}" has been ${action === 'approve' ? 'completed' : action === 'hold' ? 'put on hold' : 'rejected'}.`,
-          referenceId: payment.id,
-          referenceType: 'payment',
+      // Audit log + contractor notification are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: action === 'approve' ? 'Approve & Process Payment' : action === 'hold' ? 'Put Payment On Hold' : 'Reject Payment',
+          entityType: 'payment',
+          entityId: payment.id,
+          previousStatus: payment.status,
+          newStatus: update.status as string,
         })
-      }
+
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', payment.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          const isCompleted = action === 'approve'
+          const isRejected = action === 'reject'
+          await notify({
+            userId: contractor.user_id,
+            type: isCompleted ? 'payment_completed' : isRejected ? 'proposal_rejected' : 'payment_approved',
+            title: isCompleted ? 'Payment Completed' : isRejected ? 'Payment Rejected' : 'Payment On Hold',
+            message: `Payment of ${formatCurrency(payment.amount)} for "${payment.contractors?.company_name ?? 'contract'}" has been ${action === 'approve' ? 'completed' : action === 'hold' ? 'put on hold' : 'rejected'}.`,
+            referenceId: payment.id,
+            referenceType: 'payment',
+          })
+        }
+      })()
 
       toast.success('Payment updated successfully')
       setAction(null)
-      router.refresh()
+      router.push('/payments')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Action failed')
     } finally {

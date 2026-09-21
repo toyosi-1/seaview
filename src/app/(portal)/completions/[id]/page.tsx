@@ -17,24 +17,29 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function CompletionDetailPage({ params }: PageProps) {
   const { id } = await params
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
 
-  const { data: cr } = await supabase
-    .from('completion_reports')
-    .select('*,contracts(contract_number,contract_value,title,project_supervisor_id),contractors(company_name,contact_person,email,bank_name,account_number,account_name)')
-    .eq('id', id)
-    .maybeSingle()
+  const [{ data: cr }, { data: docs }] = await Promise.all([
+    supabase
+      .from('completion_reports')
+      .select('*,contracts(contract_number,contract_value,title,project_supervisor_id),contractors(company_name,contact_person,email,bank_name,account_number,account_name)')
+      .eq('id', id)
+      .maybeSingle(),
+    supabase.from('completion_documents').select('*').eq('completion_id', id),
+  ])
   if (!cr) notFound()
-
-  const { data: docs } = await supabase
-    .from('completion_documents').select('*').eq('completion_id', id)
 
   const report = cr as unknown as CompletionReport & {
     contracts: { contract_number: string; contract_value: number; title: string; project_supervisor_id: string | null }
     contractors: { company_name: string; contact_person: string | null; email: string; bank_name: string; account_number: string; account_name: string }
+  }
+
+  // Contractor access control: only their own completion reports
+  if (p.role === 'contractor' && (!contractorId || contractorId !== report.contractor_id)) {
+    redirect('/completions')
   }
   const projectSupervisorId = report.contracts?.project_supervisor_id ?? null
   const status = report.status as CompletionStatus
@@ -76,10 +81,19 @@ export default async function CompletionDetailPage({ params }: PageProps) {
                   <p className="text-sm text-spl-danger">{report.rejection_reason}</p>
                 </div>
               )}
-              {report.correction_requested && report.correction_reason && (
+              {report.correction_reason && (
                 <div className="mt-4 p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
                   <p className="text-sm font-semibold text-spl-warning mb-1">Correction Requested</p>
                   <p className="text-sm text-spl-warning">{report.correction_reason}</p>
+                </div>
+              )}
+              {report.correction_response && (
+                <div className="mt-4 p-4 bg-spl-success-bg rounded-xl border border-emerald-100">
+                  <p className="text-sm font-semibold text-spl-success mb-1">Contractor&apos;s Correction Response</p>
+                  <p className="text-sm text-slate-700">{report.correction_response}</p>
+                  {report.correction_responded_at && (
+                    <p className="text-xs text-slate-500 mt-2">Resubmitted {formatDateTime(report.correction_responded_at)}</p>
+                  )}
                 </div>
               )}
               {report.audit_comment && INTERNAL_ROLES.includes(p.role) && (

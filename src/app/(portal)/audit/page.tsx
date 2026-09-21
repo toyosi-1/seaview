@@ -16,18 +16,19 @@ export default async function AuditPage() {
 
   if (!['head_of_audit', 'md', 'ict_admin'].includes(p.role)) redirect('/dashboard')
 
-  const { data: completions } = await supabase
-    .from('completion_reports')
-    .select('*,contracts(contract_number,title,contract_value),contractors(company_name)')
-    .eq('status', 'audit_review')
-    .order('submitted_at', { ascending: true })
-
-  const { data: allCompleted } = await supabase
-    .from('completion_reports')
-    .select('*,contracts(contract_number,title),contractors(company_name)')
-    .in('status', ['accounts_review', 'payment_pending', 'payment_completed'])
-    .order('updated_at', { ascending: false })
-    .limit(20)
+  const [{ data: completions }, { data: allCompleted }] = await Promise.all([
+    supabase
+      .from('completion_reports')
+      .select('*,contracts(contract_number,title,contract_value),contractors(company_name)')
+      .eq('status', 'audit_review')
+      .order('submitted_at', { ascending: true }),
+    supabase
+      .from('completion_reports')
+      .select('*,contracts(contract_number,title),contractors(company_name)')
+      .in('status', ['accounts_review', 'payment_pending', 'payment_completed'])
+      .order('updated_at', { ascending: false })
+      .limit(20),
+  ])
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

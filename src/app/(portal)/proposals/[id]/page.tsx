@@ -23,7 +23,7 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ProposalDetailPage({ params }: PageProps) {
   const { id } = await params
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
@@ -38,9 +38,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
 
   // Access control
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-    if (!contractor || contractor.id !== prop.contractor_id) redirect('/proposals')
+    if (!contractorId || contractorId !== prop.contractor_id) redirect('/proposals')
   }
 
   const isInternal = INTERNAL_ROLES.includes(p.role)

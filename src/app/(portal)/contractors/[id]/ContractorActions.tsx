@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Ban, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Contractor, UserRole } from '@/types/database'
+import type { Contractor, Proposal, UserRole } from '@/types/database'
 import { notify, logAudit } from '@/lib/utils/notify'
 
 interface ContractorActionsProps {
@@ -26,52 +26,72 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
   async function handleAction() {
     if (!action) return
     setLoading(true)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const currentUser = session?.user
 
-    const update: Record<string, unknown> = { status: action }
-    if (action === 'active') {
-      update.verified_at = new Date().toISOString()
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (currentUser) update.verified_by = currentUser.id
-    }
+      const update: Record<string, unknown> = { status: action }
+      if (action === 'active') {
+        update.verified_at = new Date().toISOString()
+        if (currentUser) update.verified_by = currentUser.id
+      }
 
-    const { error } = await supabase
-      .from('contractors')
-      .update(update as Partial<Contractor>)
-      .eq('id', contractor.id)
-    if (error) {
-      toast.error('Failed to update contractor status')
-    } else {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const { error } = await supabase
+        .from('contractors')
+        .update(update as Partial<Contractor>)
+        .eq('id', contractor.id)
+      if (error) throw error
 
-      // Audit log
-      await logAudit({
-        userId: currentUser?.id ?? contractor.user_id,
-        userRole: currentRole,
-        action: action === 'active' ? 'Contractor activated' : 'Contractor suspended',
-        entityType: 'contractor',
-        entityId: contractor.id,
-        previousStatus: contractor.status,
-        newStatus: action,
-      })
+      // Suspending a contractor auto-rejects any of their in-progress
+      // quotations, since they can no longer act on or fulfill them.
+      let rejectedCount = 0
+      if (action === 'suspended') {
+        const { data: rejected } = await supabase
+          .from('proposals')
+          .update({
+            status: 'rejected',
+            rejection_reason: 'Contractor account suspended',
+          } as Partial<Proposal>)
+          .eq('contractor_id', contractor.id)
+          .not('status', 'in', '(approved,rejected)')
+          .select('id')
+        rejectedCount = rejected?.length ?? 0
+      }
 
-      // Notify contractor
-      await notify({
-        userId: contractor.user_id,
-        type: action === 'active' ? 'proposal_approved' : 'proposal_rejected',
-        title: action === 'active' ? 'Account Activated' : 'Account Suspended',
-        message: action === 'active'
-          ? 'Your contractor account has been activated. You can now submit proposals.'
-          : 'Your contractor account has been suspended. Please contact administration.',
-        referenceId: contractor.id,
-        referenceType: 'contractor',
-      })
+      // Audit log + contractor notification are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: currentUser?.id ?? contractor.user_id,
+          userRole: currentRole,
+          action: action === 'active' ? 'Contractor activated' : 'Contractor suspended',
+          entityType: 'contractor',
+          entityId: contractor.id,
+          previousStatus: contractor.status,
+          newStatus: action,
+        })
+        await notify({
+          userId: contractor.user_id,
+          type: action === 'active' ? 'proposal_approved' : 'proposal_rejected',
+          title: action === 'active' ? 'Account Activated' : 'Account Suspended',
+          message: action === 'active'
+            ? 'Your contractor account has been activated. You can now submit proposals.'
+            : rejectedCount > 0
+              ? `Your contractor account has been suspended and ${rejectedCount === 1 ? 'your pending quotation has' : `your ${rejectedCount} pending quotations have`} been rejected as a result. Please contact administration.`
+              : 'Your contractor account has been suspended. Please contact administration.',
+          referenceId: contractor.id,
+          referenceType: 'contractor',
+        })
+      })()
 
       toast.success(`Contractor ${action === 'active' ? 'activated' : 'suspended'} successfully`)
-      router.refresh()
+      router.push('/contractors')
+      setOpen(false)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update contractor status')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-    setOpen(false)
   }
 
   return (

@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import { Banknote, ArrowRight } from 'lucide-react'
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/constants'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import type { Profile, Payment, PaymentStatus } from '@/types/database'
 
-export default async function PaymentsPage() {
-  const { supabase, user, profile } = await getSessionProfile()
-  if (!user) redirect('/login')
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  const { supabase, profile, contractorId } = await getSessionProfile()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -19,27 +21,37 @@ export default async function PaymentsPage() {
     redirect('/dashboard')
   }
 
+  const sp = await searchParams
+  const currentPage = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   let payments: Payment[] = []
+  let totalCount = 0
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-    if (contractor) {
-      const { data } = await supabase
+    if (contractorId) {
+      const { data, count } = await supabase
         .from('payments')
-        .select('*,contracts(title,contract_number)')
-        .eq('contractor_id', contractor.id)
+        .select('*,contracts(title,contract_number)', { count: 'exact' })
+        .eq('contractor_id', contractorId)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
+        .range(from, to)
       payments = (data ?? []) as unknown as Payment[]
+      totalCount = count ?? 0
     }
   } else {
-    const { data } = await supabase
+    const { data, count } = await supabase
       .from('payments')
-      .select('*,contractors(company_name),contracts(title,contract_number)')
+      .select('*,contractors(company_name),contracts(title,contract_number)', { count: 'exact' })
       .order('created_at', { ascending: false })
+      .range(from, to)
     payments = (data ?? []) as unknown as Payment[]
+    totalCount = count ?? 0
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -52,7 +64,7 @@ export default async function PaymentsPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-slate-700">All Payments ({payments.length})</CardTitle>
+          <CardTitle className="text-lg font-semibold text-slate-700">All Payments ({totalCount})</CardTitle>
         </CardHeader>
         <CardContent>
           {payments.length === 0 ? (
@@ -96,6 +108,7 @@ export default async function PaymentsPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/payments" />
         </CardContent>
       </Card>
     </div>

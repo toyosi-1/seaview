@@ -21,6 +21,9 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
   if (!profile) redirect('/login')
   const p = profile as Profile
 
+  // Internal procurement is staff-only (matching the list page guard)
+  if (p.role === 'contractor') redirect('/dashboard')
+
   const { data: reqRaw } = await supabase
     .from('internal_procurement_requests')
     .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,email,department,role)')
@@ -88,7 +91,7 @@ export default async function InternalProcurementDetailPage({ params }: PageProp
                   <p className="text-sm text-spl-danger">{req.rejection_reason}</p>
                 </div>
               )}
-              {req.clarification_requested && req.clarification_reason && (
+              {req.clarification_reason && (
                 <div className="p-4 bg-spl-warning-bg rounded-xl border border-amber-100">
                   <p className="text-sm font-semibold text-spl-warning mb-1">Clarification Requested</p>
                   <p className="text-sm text-spl-warning">{req.clarification_reason}</p>

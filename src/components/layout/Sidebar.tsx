@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useNotificationsContext } from '@/contexts/NotificationsContext'
+import { useProfileContext } from '@/contexts/ProfileContext'
 import { cn } from '@/lib/utils'
 import { ROLE_LABELS } from '@/lib/constants'
 import type { Profile } from '@/types/database'
@@ -70,36 +72,16 @@ export function Sidebar({ profile }: SidebarProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  useEffect(() => {
-    const supabase = createClient()
-    async function loadUnread() {
-      const { data } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('user_id', profile.id)
-        .eq('is_read', false)
-      setUnreadCount(data?.length ?? 0)
-    }
-    loadUnread()
-    const channel = supabase
-      .channel(`sidebar-notifs:${profile.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${profile.id}`,
-      }, () => setUnreadCount(c => c + 1))
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${profile.id}`,
-      }, () => loadUnread())
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [profile.id])
+  // Shared with TopBar via NotificationsProvider — a single fetch/subscription
+  // and a single unread count, so marking notifications read anywhere (the
+  // TopBar bell dropdown, or the /notifications page) updates this badge
+  // immediately instead of depending on each component independently
+  // refetching or a realtime event happening to fire.
+  const { unreadCount } = useNotificationsContext()
+  // Shared with the Settings forms — updating the company/full name there
+  // pushes the new value here instantly, instead of waiting on a full
+  // router.refresh() round-trip to re-render the server layout.
+  const { fullName, contractorCompanyName } = useProfileContext()
 
   const visibleItems = NAV_ITEMS.filter(item =>
     !item.roles || item.roles.includes(profile.role)
@@ -115,10 +97,14 @@ export function Sidebar({ profile }: SidebarProps) {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
-    router.refresh()
   }
 
-  const displayName = profile.full_name || ROLE_LABELS[profile.role] || profile.email
+  const displayName = profile.role === 'contractor'
+    ? contractorCompanyName || fullName || profile.email
+    : fullName || ROLE_LABELS[profile.role] || profile.email
+  const displayMeta = profile.role === 'contractor'
+    ? fullName || ROLE_LABELS[profile.role]
+    : ROLE_LABELS[profile.role]
   const initials = displayName
     .split(' ')
     .map(n => n[0])
@@ -145,7 +131,7 @@ export function Sidebar({ profile }: SidebarProps) {
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center flex-shrink-0 p-1">
-              <Image src="/brand/spl-logo-mark.png" alt="Seaview Properties Limited" width={52} height={52} priority className="object-contain w-full h-full" />
+              <Image src="/brand/spl-logo-mark-optimized.png" alt="Seaview Properties Limited" width={52} height={52} priority className="object-contain w-full h-full" />
             </div>
             <div className="flex-1 min-w-0 pr-2">
               <p className="text-sm font-bold text-white leading-snug">Seaview Properties Limited</p>
@@ -154,7 +140,7 @@ export function Sidebar({ profile }: SidebarProps) {
         )}
         {collapsed && (
           <div className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mx-auto p-1">
-            <Image src="/brand/spl-logo-mark.png" alt="SPL" width={44} height={44} className="object-contain w-full h-full" />
+            <Image src="/brand/spl-logo-mark-optimized.png" alt="SPL" width={44} height={44} className="object-contain w-full h-full" />
           </div>
         )}
         <button
@@ -225,7 +211,7 @@ export function Sidebar({ profile }: SidebarProps) {
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white truncate">{displayName}</p>
-              <p className="text-xs text-blue-200/60 truncate">{ROLE_LABELS[profile.role]}</p>
+              <p className="text-xs text-blue-200/60 truncate">{displayMeta}</p>
             </div>
           )}
         </div>

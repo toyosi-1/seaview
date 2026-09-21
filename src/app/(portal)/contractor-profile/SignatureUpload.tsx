@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -15,7 +14,7 @@ import { cleanSignatureImage } from '@/lib/utils/signatureProcessing'
 import { SignaturePad, type SignaturePadHandle } from '@/components/SignaturePad'
 
 export function SignatureUpload({ profile }: { profile: Profile }) {
-  const router = useRouter()
+  const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(profile.signature_url)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -44,8 +43,9 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
         .eq('id', profile.id)
       if (updateError) throw updateError
 
+      // Optimistically update the UI — no router.refresh() needed.
+      setSavedSignatureUrl(`${publicUrl}?t=${Date.now()}`)
       toast.success('Signature saved successfully')
-      router.refresh()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -75,7 +75,8 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
       setCleanedBlob(cleaned)
       setPreviewUrl(URL.createObjectURL(cleaned))
     } catch {
-      toast.error('Could not process image, will use original')
+      setFile(null)
+      toast.error('Could not isolate a clean signature. Please use dark ink on plain white paper with even lighting, or draw it instead.')
     } finally {
       setProcessing(false)
     }
@@ -100,7 +101,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
 
   return (
     <div className="space-y-4">
-      {profile.signature_url ? (
+      {savedSignatureUrl ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-spl-success">
             <CheckCircle className="w-5 h-5" />
@@ -108,7 +109,7 @@ export function SignatureUpload({ profile }: { profile: Profile }) {
           </div>
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 inline-block">
             <Image
-              src={profile.signature_url}
+              src={savedSignatureUrl}
               alt="Your signature"
               width={160}
               height={80}

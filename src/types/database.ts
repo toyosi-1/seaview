@@ -244,6 +244,8 @@ export interface CompletionReport {
   rejection_reason: string | null
   correction_requested: boolean
   correction_reason: string | null
+  correction_response: string | null
+  correction_responded_at: string | null
   created_at: string
   updated_at: string
   contracts?: Contract
@@ -385,7 +387,7 @@ export type Database = {
       internal_procurement_documents: { Row: InternalProcurementDocument; Insert: Omit<InternalProcurementDocument, 'id' | 'created_at'>; Update: Partial<InternalProcurementDocument>; Relationships: never[] }
       tenders: { Row: Tender; Insert: Omit<Tender, 'id' | 'contract_number' | 'created_at' | 'updated_at'>; Update: Partial<Tender>; Relationships: never[] }
     }
-    Views: {}
-    Functions: {}
+    Views: Record<string, never>
+    Functions: Record<string, never>
   }
 }

@@ -36,20 +36,24 @@ export default async function TendersPage({ searchParams }: PageProps) {
     query = query.eq('status', 'open')
   }
 
-  const { data: tendersRaw, count } = await query
+  // Run the paginated query and the status-summary query in parallel
+  const statusQuery = isContractor
+    ? Promise.resolve({ data: [] as { status: string }[] | null })
+    : supabase.from('tenders').select('status')
+
+  const [{ data: tendersRaw, count }, { data: allStatuses }] = await Promise.all([
+    query,
+    statusQuery,
+  ])
+
   const tenders = (tendersRaw ?? []) as unknown as Tender[]
   const totalCount = count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
-  // Status summary counts across ALL tenders (not just the current page)
-  let statusCounts: Record<string, number> = {}
-  if (!isContractor) {
-    const { data: allStatuses } = await supabase.from('tenders').select('status')
-    statusCounts = ((allStatuses ?? []) as { status: string }[]).reduce((acc, row) => {
-      acc[row.status] = (acc[row.status] ?? 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-  }
+  const statusCounts = ((allStatuses ?? []) as { status: string }[]).reduce((acc, row) => {
+    acc[row.status] = (acc[row.status] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

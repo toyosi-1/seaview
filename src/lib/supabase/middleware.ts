@@ -7,7 +7,7 @@ import type { Database } from '@/types/database'
 // an unhandled hang/rejection here crashes the whole Edge Function and the
 // user sees a hard "Edge Function error" with no page ever loading. This
 // timeout ensures we always fail open (let the request through) instead.
-const SUPABASE_TIMEOUT_MS = 5000
+const SUPABASE_TIMEOUT_MS = 2000
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([

@@ -12,7 +12,8 @@ export function useProfile() {
     const supabase = createClient()
 
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { setLoading(false); return }
 
       const { data } = await supabase

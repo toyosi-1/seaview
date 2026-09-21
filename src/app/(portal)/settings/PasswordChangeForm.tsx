@@ -24,7 +24,8 @@ export function PasswordChangeForm() {
     try {
       const supabase = createClient()
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user?.email) throw new Error('Not authenticated')
 
       const { error: signInError } = await supabase.auth.signInWithPassword({

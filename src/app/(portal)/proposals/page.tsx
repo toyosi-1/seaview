@@ -13,7 +13,7 @@ import type { Profile, Proposal, ProposalStatus } from '@/types/database'
 interface PageProps { searchParams: Promise<{ page?: string }> }
 
 export default async function ProposalsPage({ searchParams }: PageProps) {
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
@@ -28,13 +28,11 @@ export default async function ProposalsPage({ searchParams }: PageProps) {
   let statusCounts: Record<string, number> = {}
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-    if (contractor) {
+    if (contractorId) {
       const { data, count } = await supabase
         .from('proposals')
         .select('*,contractors(company_name)', { count: 'exact' })
-        .eq('contractor_id', contractor.id)
+        .eq('contractor_id', contractorId)
         .order('created_at', { ascending: false })
         .range(from, to)
       proposals = (data ?? []) as unknown as Proposal[]

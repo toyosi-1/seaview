@@ -44,7 +44,6 @@ function LoginContent() {
       return
     }
     router.push('/dashboard')
-    router.refresh()
   }
 
   return (

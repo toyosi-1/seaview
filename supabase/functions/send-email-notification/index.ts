@@ -7,7 +7,6 @@ const supabase = createClient(
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "noreply@seaviewproperties.com";
-const PORTAL_URL = Deno.env.get("PORTAL_URL") ?? "https://bwdbxtnzmrzfbonbpikv.supabase.co";
 
 const EMAIL_TEMPLATES: Record<string, (title: string, message: string) => { subject: string; body: string }> = {
   proposal_submitted: (_t, m) => ({ subject: "New Proposal Submitted — Action Required", body: m }),

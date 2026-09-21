@@ -26,17 +26,19 @@ export default async function InternalProcurementPage({ searchParams }: PageProp
   const from = (currentPage - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  const { data, count } = await supabase
-    .from('internal_procurement_requests')
-    .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,role)', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to)
+  const [{ data, count }, { data: allStatusRows }] = await Promise.all([
+    supabase
+      .from('internal_procurement_requests')
+      .select('*,profiles!internal_procurement_requests_requested_by_fkey(full_name,role)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to),
+    // Status summary counts across ALL requests (not just the current page)
+    supabase.from('internal_procurement_requests').select('status'),
+  ])
   const requests = (data ?? []) as unknown as (InternalProcurementRequest & { profiles?: { full_name: string | null; role: UserRole } })[]
   const totalCount = count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
-  // Status summary counts across ALL requests (not just the current page)
-  const { data: allStatusRows } = await supabase.from('internal_procurement_requests').select('status')
   const statusCounts = ((allStatusRows ?? []) as { status: string }[]).reduce((acc, row) => {
     acc[row.status] = (acc[row.status] ?? 0) + 1
     return acc

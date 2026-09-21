@@ -36,6 +36,7 @@ function NewProposalContent() {
   const presetTenderId = searchParams.get('tender')
 
   const [loading, setLoading] = useState(false)
+  const [tendersLoading, setTendersLoading] = useState(true)
   const [tenders, setTenders] = useState<TenderOption[]>([])
   const [selectedTenderId, setSelectedTenderId] = useState(presetTenderId ?? '')
   const [title, setTitle] = useState('')
@@ -61,6 +62,7 @@ function NewProposalContent() {
           setDescription(t.description)
         }
       }
+      setTendersLoading(false)
     }
     loadTenders()
   }, [presetTenderId])
@@ -87,14 +89,19 @@ function NewProposalContent() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
       const { data: contractorRaw } = await supabase
         .from('contractors').select('id,status').eq('user_id', user.id).maybeSingle()
       const contractor = contractorRaw as unknown as { id: string; status: string } | null
       if (!contractor) throw new Error('Contractor profile not found. Please complete registration.')
-      if (contractor.status !== 'active') throw new Error('Your contractor account is not yet active. Please wait for verification.')
+      if (contractor.status !== 'active') {
+        throw new Error(contractor.status === 'suspended'
+          ? 'Your contractor account has been suspended. You cannot submit quotations.'
+          : 'Your contractor account is not yet active. Please wait for verification.')
+      }
 
       // Check for duplicate proposal
       const { count } = await supabase
@@ -175,26 +182,28 @@ function NewProposalContent() {
         note: `Quotation submitted for review. Estimated cost: ₦${parseFloat(estimatedCost.replace(/,/g, '')).toLocaleString()}`,
       })
 
-      // Audit log
-      await logAudit({
-        userId: user.id,
-        userRole: 'contractor',
-        action: 'Quotation submitted',
-        entityType: 'proposal',
-        entityId: proposal.id,
-        newStatus: 'submitted',
-      })
-
-      // Notify MD of new proposal
-      const mdStaff = await getStaffByRole('md')
-      await notifyMany(mdStaff.map(s => ({
-        userId: s.id,
-        type: 'proposal_submitted',
-        title: 'New Quotation Submitted',
-        message: `A new quotation "${title.trim()}" has been submitted and requires your review.`,
-        referenceId: proposal.id,
-        referenceType: 'proposal',
-      })))
+      // Audit log + MD notification are best-effort — fire-and-forget so the
+      // user doesn't wait on 2-3 extra network round-trips after the
+      // quotation itself has already been saved.
+      void (async () => {
+        await logAudit({
+          userId: user.id,
+          userRole: 'contractor',
+          action: 'Quotation submitted',
+          entityType: 'proposal',
+          entityId: proposal.id,
+          newStatus: 'submitted',
+        })
+        const mdStaff = await getStaffByRole('md')
+        await notifyMany(mdStaff.map(s => ({
+          userId: s.id,
+          type: 'proposal_submitted',
+          title: 'New Quotation Submitted',
+          message: `A new quotation "${title.trim()}" has been submitted and requires your review.`,
+          referenceId: proposal.id,
+          referenceType: 'proposal',
+        })))
+      })()
 
       toast.success('Quotation submitted successfully!')
       router.push(`/proposals/${proposal.id}`)
@@ -233,7 +242,13 @@ function NewProposalContent() {
             <CardDescription>Choose the contract you want to submit a quotation for</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {tenders.length === 0 ? (
+            {tendersLoading ? (
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
+                ))}
+              </div>
+            ) : tenders.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
                 <Briefcase className="w-10 h-10 mx-auto mb-2 opacity-30" />
                 <p className="font-medium">No open contracts available</p>

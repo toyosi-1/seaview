@@ -11,16 +11,17 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, Contractor, ContractorDocument, ContractorStatus } from '@/types/database'
 
 export default async function ContractorProfilePage() {
-  const { supabase, user } = await getSessionProfile()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   if (!profile || (profile as Profile).role !== 'contractor') redirect('/dashboard')
 
-  const { data: contractor } = await supabase
-    .from('contractors').select('*').eq('user_id', user.id).maybeSingle()
+  const { data: contractorRaw } = await supabase
+    .from('contractors')
+    .select('*, contractor_documents(*)')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-  if (!contractor) {
+  if (!contractorRaw) {
     return (
       <div className="max-w-3xl mx-auto text-center py-20">
         <Building2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -33,10 +34,8 @@ export default async function ContractorProfilePage() {
     )
   }
 
-  const c = contractor as Contractor
-
-  const { data: documents } = await supabase
-    .from('contractor_documents').select('*').eq('contractor_id', c.id)
+  const { contractor_documents: documents, ...contractorFields } = contractorRaw as Contractor & { contractor_documents: ContractorDocument[] }
+  const c = contractorFields as Contractor
 
   const infoItem = (icon: React.ReactNode, label: string, value: string | null) => (
     <div className="flex items-start gap-3">

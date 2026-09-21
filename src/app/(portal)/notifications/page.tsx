@@ -1,8 +1,9 @@
 import { getSessionProfile } from '@/lib/supabase/session'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Bell } from 'lucide-react'
+import { ArrowRight, Bell } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils/format'
 import type { Notification } from '@/types/database'
 
@@ -18,22 +19,37 @@ const TYPE_COLORS: Record<string, string> = {
   default: 'bg-slate-100 text-slate-800',
 }
 
+function notificationHref(n: Notification): string | null {
+  if (!n.reference_id || !n.reference_type) return null
+  if (n.reference_type === 'completion') return `/completions/${n.reference_id}`
+  if (n.reference_type === 'proposal') return `/proposals/${n.reference_id}`
+  if (n.reference_type === 'contract') return `/contracts/${n.reference_id}`
+  if (n.reference_type === 'tender') return `/tenders/${n.reference_id}`
+  if (n.reference_type === 'procurement') return `/internal-procurement/${n.reference_id}`
+  if (n.reference_type === 'payment') return `/payments`
+  return null
+}
+
 export default async function NotificationsPage() {
   const { supabase, user } = await getSessionProfile()
   if (!user) redirect('/login')
 
-  const { data: notifications } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  // Mark all as read
+  // Mark all as read FIRST, then fetch. This ensures the SELECT always
+  // returns is_read: true for every row — no race condition, and the
+  // client-side NotificationsContext badge clears correctly.
   await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('user_id', user.id)
     .eq('is_read', false)
+
+  const { data: rawNotifications } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  const notifications = rawNotifications as Notification[]
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -56,24 +72,35 @@ export default async function NotificationsPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {(notifications as Notification[]).map(n => (
-                <div
-                  key={n.id}
-                  className="flex items-start gap-4 px-5 py-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
-                >
-                  <div className={`w-2 h-2 rounded-sm mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-spl-blue-light' : 'bg-transparent'}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-800 text-base">{n.title}</p>
-                      <Badge className={`capitalize ${TYPE_COLORS[n.type] ?? TYPE_COLORS.default}`}>
-                        {n.type.replace(/_/g, ' ')}
-                      </Badge>
+              {(notifications as Notification[]).map(n => {
+                const href = notificationHref(n)
+                const content = (
+                  <div className="flex items-start gap-4 px-5 py-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                    <div className={`w-2 h-2 rounded-sm mt-2.5 flex-shrink-0 ${!n.is_read ? 'bg-spl-blue-light' : 'bg-transparent'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-slate-800 text-base">{n.title}</p>
+                        <Badge className={`capitalize ${TYPE_COLORS[n.type] ?? TYPE_COLORS.default}`}>
+                          {n.type.replace(/_/g, ' ')}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-0.5">{n.message}</p>
+                      <p className="text-xs text-slate-400 mt-1">{formatRelativeTime(n.created_at)}</p>
+                      {href && (
+                        <span className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold text-spl-blue">
+                          {n.type === 'completion_correction_requested' ? 'Address Correction' : 'View Details'}
+                          <ArrowRight className="w-4 h-4" />
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-slate-600 mt-0.5">{n.message}</p>
-                    <p className="text-xs text-slate-400 mt-1">{formatRelativeTime(n.created_at)}</p>
                   </div>
-                </div>
-              ))}
+                )
+                return href ? (
+                  <Link key={n.id} href={href} className="block">{content}</Link>
+                ) : (
+                  <div key={n.id}>{content}</div>
+                )
+              })}
             </div>
           )}
         </CardContent>

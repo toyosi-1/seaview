@@ -17,14 +17,15 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function ContractDetailPage({ params }: PageProps) {
   const { id } = await params
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId, contractorStatus } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
+  const isSuspended = p.role === 'contractor' && contractorStatus === 'suspended'
 
   const { data: contract } = await supabase
     .from('contracts')
-    .select('*,contractors(company_name,contact_person,email,phone,address,bank_name,account_number,account_name),proposals(proposal_number,description,submitted_at),project_supervisor:profiles!contracts_project_supervisor_id_fkey(full_name,role)')
+    .select('*,contractors(company_name,contact_person,email,phone,address,bank_name,account_number,account_name),proposals(proposal_number,description,submitted_at),project_supervisor:profiles!contracts_project_supervisor_id_fkey(full_name,role),completion_reports(id)')
     .eq('id', id)
     .maybeSingle()
   if (!contract) notFound()
@@ -33,27 +34,35 @@ export default async function ContractDetailPage({ params }: PageProps) {
     contractors: { company_name: string; contact_person: string | null; email: string; phone: string | null; address: string | null; bank_name: string; account_number: string; account_name: string }
     proposals: { proposal_number: string; description: string; submitted_at: string }
     project_supervisor: { full_name: string | null; role: UserRole } | null
+    completion_reports: { id: string }[]
   }
 
-  const { data: mdProfileRaw } = await supabase
-    .from('profiles')
-    .select('full_name,signature_url,role')
-    .eq('role', 'md')
-    .eq('is_active', true)
-    .maybeSingle()
-  const mdProfile = mdProfileRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
+  // Contractor access control: only their own contracts
+  if (p.role === 'contractor' && (!contractorId || contractorId !== c.contractor_id)) {
+    redirect('/contracts')
+  }
 
   // Fallback: if a department is assigned but no supervisor is stored (legacy data),
   // resolve the current department head's role/name dynamically.
   const supervisorRole = c.responsible_department ? DEPARTMENT_HEAD_ROLE[c.responsible_department] : null
-  const { data: departmentHeadRaw } = supervisorRole
-    ? await supabase
-        .from('profiles')
-        .select('full_name,role')
-        .eq('role', supervisorRole)
-        .eq('is_active', true)
-        .maybeSingle()
-    : { data: null }
+
+  const [{ data: mdProfileRaw }, { data: departmentHeadRaw }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('full_name,signature_url,role')
+      .eq('role', 'md')
+      .eq('is_active', true)
+      .maybeSingle(),
+    supervisorRole
+      ? supabase
+          .from('profiles')
+          .select('full_name,role')
+          .eq('role', supervisorRole)
+          .eq('is_active', true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+  const mdProfile = mdProfileRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
   const departmentHead = departmentHeadRaw as unknown as { full_name: string | null; role: UserRole } | null
 
   const INTERNAL_EDIT_ROLES: UserRole[] = ['md', 'head_of_procurement', 'ict_admin']
@@ -157,6 +166,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
                     contractorAddress={c.contractors?.address ?? undefined}
                     contractorPhone={c.contractors?.phone ?? undefined}
                     contractTitle={c.title}
+                    contractDescription={c.proposals?.description ?? ''}
                     contractValue={c.contract_value}
                     awardDate={c.awarded_at}
                     bidDate={c.proposals?.submitted_at ?? undefined}
@@ -182,16 +192,28 @@ export default async function ContractDetailPage({ params }: PageProps) {
           </Card>
 
           {/* Project Completion CTA for contractors */}
-          {p.role === 'contractor' && c.status === 'active' && (
+          {p.role === 'contractor' && c.status === 'active' && isSuspended && (
+            <Card className="border-0 shadow-sm bg-spl-danger-bg border border-red-200">
+              <CardContent className="p-5">
+                <h3 className="font-bold text-spl-danger text-lg">Account Suspended</h3>
+                <p className="text-spl-danger/80 text-sm mt-1">
+                  Your account is suspended. You cannot submit completion reports at this time. Please contact Seaview Properties Limited for assistance.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {p.role === 'contractor' && c.status === 'active' && !isSuspended && (
             <Card className="border-0 shadow-sm bg-spl-blue-light border-blue-100">
               <CardContent className="p-5">
-                <h3 className="font-bold text-spl-blue-dark text-lg">Ready to submit project completion?</h3>
+                <h3 className="font-bold text-spl-blue-dark text-lg">{c.completion_reports?.length ? 'Completion report submitted' : 'Ready to submit project completion?'}</h3>
                 <p className="text-spl-blue text-sm mt-1 mb-4">
-                  Once your project is complete, submit your completion report and evidence for verification.
+                  {c.completion_reports?.length
+                    ? 'Open the existing report to track its review or respond to a correction request.'
+                    : 'Once your project is complete, submit your completion report and evidence for verification.'}
                 </p>
                 <Button asChild className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11">
-                  <Link href={`/completions/new?contract_id=${c.id}`}>
-                    Submit Completion Report
+                  <Link href={c.completion_reports?.[0]?.id ? `/completions/${c.completion_reports[0].id}` : `/completions/new?contract_id=${c.id}`}>
+                    {c.completion_reports?.length ? 'View Completion Report' : 'Submit Completion Report'}
                   </Link>
                 </Button>
               </CardContent>

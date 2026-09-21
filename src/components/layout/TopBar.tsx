@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Bell, Search, X, Home } from 'lucide-react'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificationsContext } from '@/contexts/NotificationsContext'
 import { formatRelativeTime } from '@/lib/utils/format'
-import type { Profile } from '@/types/database'
+import type { Notification, Profile } from '@/types/database'
 
 interface SearchResult {
   type: string
@@ -20,24 +20,24 @@ interface SearchResult {
   href: string
 }
 
-export function TopBar({ profile }: { profile: Profile }) {
+function notificationHref(notification: Notification): string {
+  if (!notification.reference_id) return '/notifications'
+  if (notification.reference_type === 'completion') return `/completions/${notification.reference_id}`
+  if (notification.reference_type === 'proposal') return `/proposals/${notification.reference_id}`
+  if (notification.reference_type === 'contract') return `/contracts/${notification.reference_id}`
+  if (notification.reference_type === 'procurement') return `/internal-procurement/${notification.reference_id}`
+  return '/notifications'
+}
+
+export function TopBar({ profile, contractorId }: { profile: Profile; contractorId: string | null }) {
   const router = useRouter()
-  const { notifications, unreadCount, markAllRead } = useNotifications(profile.id)
+  const { notifications, unreadCount, markAllRead } = useNotificationsContext()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [contractorId, setContractorId] = useState<string | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (profile.role !== 'contractor') return
-    const supabase = createClient()
-    supabase.from('contractors').select('id').eq('user_id', profile.id).maybeSingle().then(({ data }) => {
-      if (data) setContractorId((data as { id: string }).id)
-    })
-  }, [profile.id, profile.role])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -54,8 +54,12 @@ export function TopBar({ profile }: { profile: Profile }) {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
     const timer = setTimeout(async () => {
       if (query.trim().length < 2) { setResults([]); return }
+      // For contractors, wait until contractorId is loaded before searching
+      // so we don't show other contractors' records
+      if (profile.role === 'contractor' && !contractorId) { return }
       setSearching(true)
       const supabase = createClient()
       const q = query.trim()
@@ -70,7 +74,7 @@ export function TopBar({ profile }: { profile: Profile }) {
       if (isContractor && contractorId) proposalsQuery = proposalsQuery.eq('contractor_id', contractorId)
       proposalsQuery = proposalsQuery.limit(5)
 
-      let contractsQuery = supabase.from('contracts').select('id,contract_number,title').ilike('contract_number', `%${q}%`)
+      let contractsQuery = supabase.from('contracts').select('id,contract_number,title').or(`contract_number.ilike.%${q}%,title.ilike.%${q}%`)
       if (isContractor && contractorId) contractsQuery = contractsQuery.eq('contractor_id', contractorId)
       contractsQuery = contractsQuery.limit(5)
 
@@ -103,16 +107,20 @@ export function TopBar({ profile }: { profile: Profile }) {
       payments.forEach(p => found.push({ type: 'Payment', id: p.id, label: p.payment_number, sub: 'Payment record', href: `/payments/${p.id}` }))
       internalProcurement.forEach(r => found.push({ type: 'Procurement Request', id: r.id, label: r.item_description, sub: r.request_number, href: `/internal-procurement/${r.id}` }))
 
+      if (cancelled) return
       setResults(found)
       setSearching(false)
     }, 300)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [query, contractorId, profile.role])
 
   return (
     <header className="h-16 bg-white border-b border-spl-border flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-14 lg:pl-6">
       {/* Home button */}
-      <Link href="/dashboard" className="flex items-center gap-2 text-slate-600 hover:text-spl-blue transition-colors flex-shrink-0">
+      <Link href="/dashboard" aria-label="Dashboard" className="flex items-center gap-2 text-slate-600 hover:text-spl-blue transition-colors flex-shrink-0">
         <div className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-spl-blue-light flex items-center justify-center transition-colors">
           <Home className="w-5 h-5" />
         </div>
@@ -125,10 +133,11 @@ export function TopBar({ profile }: { profile: Profile }) {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search contractors, proposals, contracts, payments..."
+            aria-label="Search portal"
             className="pl-9 pr-9 h-10 bg-slate-50 border-slate-200 text-sm"
           />
           {query && (
-            <button type="button" onClick={() => { setQuery(''); setResults([]) }} className="absolute right-3 top-1/2 -translate-y-1/2">
+            <button type="button" aria-label="Clear search" onClick={() => { setQuery(''); setResults([]) }} className="absolute right-3 top-1/2 -translate-y-1/2">
               <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
             </button>
           )}
@@ -166,6 +175,8 @@ export function TopBar({ profile }: { profile: Profile }) {
           variant="ghost"
           size="sm"
           onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications && unreadCount > 0) markAllRead() }}
+          aria-label="Notifications"
+          aria-expanded={showNotifications}
           className="relative w-10 h-10 p-0"
         >
           <Bell className="w-5 h-5 text-slate-600" />
@@ -186,11 +197,16 @@ export function TopBar({ profile }: { profile: Profile }) {
               <div className="px-4 py-8 text-center text-slate-500 text-sm">No notifications yet</div>
             ) : (
               notifications.slice(0, 10).map(n => (
-                <div key={n.id} className={`px-4 py-3 border-b border-slate-50 last:border-0 ${!n.is_read ? 'bg-spl-blue-light/50' : ''}`}>
+                <Link
+                  key={n.id}
+                  href={notificationHref(n)}
+                  onClick={() => setShowNotifications(false)}
+                  className={`block px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 ${!n.is_read ? 'bg-spl-blue-light/50' : ''}`}
+                >
                   <p className="text-sm font-medium text-slate-800">{n.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
                   <p className="text-xs text-slate-400 mt-1">{formatRelativeTime(n.created_at)}</p>
-                </div>
+                </Link>
               ))
             )}
           </div>

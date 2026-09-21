@@ -124,7 +124,6 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
 
       // If final approval, create contract
       if (selectedTransition.action === 'approve' && proposal.status === 'md_final_review') {
-        const now = new Date().toISOString()
         await supabase.from('contracts').insert({
           proposal_id: proposal.id,
           contractor_id: proposal.contractor_id,
@@ -151,61 +150,61 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
         }
       }
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: selectedTransition.label,
-        entityType: 'proposal',
-        entityId: proposal.id,
-        previousStatus: proposal.status,
-        newStatus: selectedTransition.nextStatus,
-      })
-
-      // Notifications
-      const notifType = selectedTransition.action === 'reject' ? 'proposal_rejected'
-        : selectedTransition.action === 'return' ? 'proposal_returned'
-        : selectedTransition.action === 'approve' ? 'proposal_approved'
-        : 'proposal_forwarded'
-
-      // Notify contractor
-      const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
-      const contractor = contractorRaw as unknown as { user_id: string } | null
-      if (contractor) {
-        await notify({
-          userId: contractor.user_id,
-          type: notifType,
-          title: `Quotation ${selectedTransition.action === 'reject' ? 'Rejected' : selectedTransition.action === 'return' ? 'Returned' : 'Updated'}`,
-          message: `Your quotation "${proposal.title}" status: ${CONTRACTOR_PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus] ?? PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus]}.`,
-          referenceId: proposal.id,
-          referenceType: 'proposal',
+      // Audit log + notifications are best-effort — fire-and-forget so the
+      // user doesn't wait on several extra network round-trips.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: selectedTransition.label,
+          entityType: 'proposal',
+          entityId: proposal.id,
+          previousStatus: proposal.status,
+          newStatus: selectedTransition.nextStatus,
         })
-      }
 
-      // Notify next-stage staff on forward/approve
-      if (selectedTransition.action === 'forward' || selectedTransition.action === 'approve') {
-        const nextRole = selectedTransition.nextStatus === 'procurement_appraisal' ? 'head_of_procurement'
-          : selectedTransition.nextStatus === 'md_final_review' ? 'md'
-          : selectedTransition.nextStatus === 'ict_assignment' ? 'ict_admin'
-          : null
-        if (nextRole) {
-          const staff = await getStaffByRole(nextRole)
-          await notifyMany(staff.map(s => ({
-            userId: s.id,
-            type: 'proposal_forwarded',
-            title: 'Quotation Requires Your Action',
-            message: `Quotation "${proposal.title}" is now in the ${PROPOSAL_STATUS_LABELS[selectedTransition.nextStage as ProposalStatus] ?? selectedTransition.nextStage.replace(/_/g, ' ')} stage.`,
+        const notifType = selectedTransition.action === 'reject' ? 'proposal_rejected'
+          : selectedTransition.action === 'return' ? 'proposal_returned'
+          : selectedTransition.action === 'approve' ? 'proposal_approved'
+          : 'proposal_forwarded'
+
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          await notify({
+            userId: contractor.user_id,
+            type: notifType,
+            title: `Quotation ${selectedTransition.action === 'reject' ? 'Rejected' : selectedTransition.action === 'return' ? 'Returned' : 'Updated'}`,
+            message: `Your quotation "${proposal.title}" status: ${CONTRACTOR_PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus] ?? PROPOSAL_STATUS_LABELS[selectedTransition.nextStatus]}.`,
             referenceId: proposal.id,
             referenceType: 'proposal',
-          })))
+          })
         }
-      }
+
+        if (selectedTransition.action === 'forward' || selectedTransition.action === 'approve') {
+          const nextRole = selectedTransition.nextStatus === 'procurement_appraisal' ? 'head_of_procurement'
+            : selectedTransition.nextStatus === 'md_final_review' ? 'md'
+            : selectedTransition.nextStatus === 'ict_assignment' ? 'ict_admin'
+            : null
+          if (nextRole) {
+            const staff = await getStaffByRole(nextRole)
+            await notifyMany(staff.map(s => ({
+              userId: s.id,
+              type: 'proposal_forwarded',
+              title: 'Quotation Requires Your Action',
+              message: `Quotation "${proposal.title}" is now in the ${PROPOSAL_STATUS_LABELS[selectedTransition.nextStage as ProposalStatus] ?? selectedTransition.nextStage.replace(/_/g, ' ')} stage.`,
+              referenceId: proposal.id,
+              referenceType: 'proposal',
+            })))
+          }
+        }
+      })()
 
       toast.success(`Quotation ${selectedTransition.label.toLowerCase()} successfully`)
       setSelectedTransition(null)
       setComment('')
-      router.refresh()
+      router.push('/proposals')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Action failed')
     } finally {

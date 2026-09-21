@@ -21,17 +21,27 @@ export async function POST(request: Request) {
   }
 
   const { email, password, companyName, cacNumber, tinNumber, bankName, accountNumber, accountName } = body
+  const normalizedEmail = email?.trim().toLowerCase()
 
-  if (!email?.trim() || !password || !companyName?.trim() || !cacNumber?.trim() || !tinNumber?.trim() ||
+  if (!normalizedEmail || !password || !companyName?.trim() || !cacNumber?.trim() || !tinNumber?.trim() ||
       !bankName?.trim() || !accountNumber?.trim() || !accountName?.trim()) {
     return NextResponse.json({ error: 'All required fields must be filled in' }, { status: 400 })
+  }
+  if (password.length < 8 || password.length > 128) {
+    return NextResponse.json({ error: 'Password must be between 8 and 128 characters' }, { status: 400 })
+  }
+  if (normalizedEmail.length > 254 || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+    return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
+  }
+  if ([companyName, cacNumber, tinNumber, bankName, accountNumber, accountName].some(value => value.trim().length > 200)) {
+    return NextResponse.json({ error: 'One or more fields exceed the maximum length' }, { status: 400 })
   }
 
   const admin = createAdminClient()
 
   // Create the auth user, pre-confirmed so they can log in immediately
   const { data: userData, error: createUserError } = await admin.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: true,
   })
@@ -48,7 +58,7 @@ export async function POST(request: Request) {
   const { error: profileError } = await admin.from('profiles').insert({
     id: userId,
     full_name: companyName.trim(),
-    email,
+    email: normalizedEmail,
     role: 'contractor',
     is_active: true,
     phone: null,
@@ -72,7 +82,7 @@ export async function POST(request: Request) {
     account_number: accountNumber.trim(),
     account_name: accountName.trim(),
     contact_person: null,
-    email,
+    email: normalizedEmail,
     phone: null,
     address: null,
     status: 'active',

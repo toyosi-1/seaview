@@ -90,20 +90,24 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
       if (selected.isCorrection) {
         const { error } = await supabase
           .from('completion_reports')
-          .update({ correction_requested: true, correction_reason: comment } as Partial<CompletionReport>)
+          .update({
+            correction_requested: true,
+            correction_reason: comment.trim(),
+            correction_response: null,
+            correction_responded_at: null,
+          } as Partial<CompletionReport>)
           .eq('id', completion.id)
         if (error) throw error
 
         await logAudit({
           userId: profile.id,
           userRole: profile.role,
-          action: 'Returned for Correction',
+          action: `Returned for Correction: ${comment.trim()}`,
           entityType: 'completion_report',
           entityId: completion.id,
           previousStatus: completion.status,
           newStatus: completion.status,
         })
-
         const { data: contractorRaw } = await supabase
           .from('contractors').select('user_id').eq('id', completion.contractor_id).maybeSingle()
         const contractor = contractorRaw as unknown as { user_id: string } | null
@@ -121,7 +125,7 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
         toast.success('Correction request sent to contractor')
         setSelected(null)
         setComment('')
-        router.refresh()
+        router.push('/completions')
         return
       }
 
@@ -193,59 +197,60 @@ export function CompletionActions({ completion, profile, projectSupervisorId }: 
         .eq('id', completion.id)
       if (error) throw error
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: selected.label,
-        entityType: 'completion_report',
-        entityId: completion.id,
-        previousStatus: completion.status,
-        newStatus: selected.nextStatus,
-      })
-
-      // Notify contractor
-      const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', completion.contractor_id).maybeSingle()
-      const contractor = contractorRaw as unknown as { user_id: string } | null
-      if (contractor) {
-        const isReject = selected.nextStatus === 'rejected'
-        const isPaymentDone = selected.nextStatus === 'payment_completed'
-        await notify({
-          userId: contractor.user_id,
-          type: isReject ? 'audit_rejected' : isPaymentDone ? 'payment_completed' : 'audit_approved',
-          title: isReject ? 'Completion Report Rejected' : isPaymentDone ? 'Payment Completed' : 'Completion Report Updated',
-          message: isPaymentDone
-            ? `Your completion report "${completion.title}" has been approved and payment has been made to your account.`
-            : `Your completion report "${completion.title}" status: ${CONTRACTOR_COMPLETION_STATUS_LABELS[selected.nextStatus] ?? COMPLETION_STATUS_LABELS[selected.nextStatus]}.`,
-          referenceId: completion.id,
-          referenceType: 'completion',
+      // Audit log + notifications are best-effort — fire-and-forget so the
+      // user doesn't wait on several extra network round-trips.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: selected.label,
+          entityType: 'completion_report',
+          entityId: completion.id,
+          previousStatus: completion.status,
+          newStatus: selected.nextStatus,
         })
-      }
 
-      // Notify next-stage staff
-      if (selected.nextStatus !== 'rejected') {
-        const nextRole = selected.nextStatus === 'md_verification' ? 'md'
-          : selected.nextStatus === 'audit_review' ? 'head_of_audit'
-          : selected.nextStatus === 'accounts_review' ? 'head_of_accounts'
-          : null
-        if (nextRole) {
-          const staff = await getStaffByRole(nextRole)
-          await notifyMany(staff.map(s => ({
-            userId: s.id,
-            type: 'completion_submitted',
-            title: 'Completion Report Requires Your Action',
-            message: `Completion report "${completion.title}" is now in the ${COMPLETION_STATUS_LABELS[selected.nextStatus]} stage.`,
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', completion.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          const isReject = selected.nextStatus === 'rejected'
+          const isPaymentDone = selected.nextStatus === 'payment_completed'
+          await notify({
+            userId: contractor.user_id,
+            type: isReject ? 'audit_rejected' : isPaymentDone ? 'payment_completed' : 'audit_approved',
+            title: isReject ? 'Completion Report Rejected' : isPaymentDone ? 'Payment Completed' : 'Completion Report Updated',
+            message: isPaymentDone
+              ? `Your completion report "${completion.title}" has been approved and payment has been made to your account.`
+              : `Your completion report "${completion.title}" status: ${CONTRACTOR_COMPLETION_STATUS_LABELS[selected.nextStatus] ?? COMPLETION_STATUS_LABELS[selected.nextStatus]}.`,
             referenceId: completion.id,
             referenceType: 'completion',
-          })))
+          })
         }
-      }
+
+        if (selected.nextStatus !== 'rejected') {
+          const nextRole = selected.nextStatus === 'md_verification' ? 'md'
+            : selected.nextStatus === 'audit_review' ? 'head_of_audit'
+            : selected.nextStatus === 'accounts_review' ? 'head_of_accounts'
+            : null
+          if (nextRole) {
+            const staff = await getStaffByRole(nextRole)
+            await notifyMany(staff.map(s => ({
+              userId: s.id,
+              type: 'completion_submitted',
+              title: 'Completion Report Requires Your Action',
+              message: `Completion report "${completion.title}" is now in the ${COMPLETION_STATUS_LABELS[selected.nextStatus]} stage.`,
+              referenceId: completion.id,
+              referenceType: 'completion',
+            })))
+          }
+        }
+      })()
 
       toast.success('Action completed successfully')
       setSelected(null)
       setComment('')
-      router.refresh()
+      router.push('/completions')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Action failed')
     } finally {

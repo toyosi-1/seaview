@@ -83,47 +83,47 @@ export function ICTAssignmentPanel({ proposal, profile }: ICTAssignmentPanelProp
         note: `Project Supervisor: ${supervisorRole ? supervisorRole : 'N/A'}`,
       })
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: `Assigned to ${DEPARTMENT_LABELS[department as Department]} Department`,
-        entityType: 'proposal',
-        entityId: proposal.id,
-        previousStatus: 'ict_assignment',
-        newStatus: 'approved',
-      })
-
-      // Notify contractor of approval
-      const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
-      const contractor = contractorRaw as unknown as { user_id: string } | null
-      if (contractor) {
-        await notify({
-          userId: contractor.user_id,
-          type: 'contract_awarded',
-          title: 'Contract Awarded',
-          message: `Your quotation "${proposal.title}" has been approved and a contract has been awarded.`,
-          referenceId: proposal.id,
-          referenceType: 'proposal',
+      // Audit log + notifications are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: `Assigned to ${DEPARTMENT_LABELS[department as Department]} Department`,
+          entityType: 'proposal',
+          entityId: proposal.id,
+          previousStatus: 'ict_assignment',
+          newStatus: 'approved',
         })
-      }
 
-      // Notify project supervisor
-      if (supervisor) {
-        await notify({
-          userId: supervisor.id,
-          type: 'contract_awarded',
-          title: 'New Project Assigned',
-          message: `You have been assigned as Project Supervisor for "${proposal.title}".`,
-          referenceId: contract.id,
-          referenceType: 'contract',
-        })
-      }
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', proposal.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          await notify({
+            userId: contractor.user_id,
+            type: 'contract_awarded',
+            title: 'Contract Awarded',
+            message: `Your quotation "${proposal.title}" has been approved and a contract has been awarded.`,
+            referenceId: proposal.id,
+            referenceType: 'proposal',
+          })
+        }
+
+        if (supervisor) {
+          await notify({
+            userId: supervisor.id,
+            type: 'contract_awarded',
+            title: 'New Project Assigned',
+            message: `You have been assigned as Project Supervisor for "${proposal.title}".`,
+            referenceId: contract.id,
+            referenceType: 'contract',
+          })
+        }
+      })()
 
       toast.success('Department assigned. Award letter is now available.')
       setOpen(false)
-      router.refresh()
+      router.push('/proposals')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Assignment failed')
     } finally {

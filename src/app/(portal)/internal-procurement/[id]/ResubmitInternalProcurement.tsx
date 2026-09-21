@@ -53,36 +53,38 @@ export function ResubmitInternalProcurement({ request, profile }: ResubmitIntern
           estimated_cost: cost,
           reason: capitalizeFirst(reason),
           clarification_requested: false,
-          clarification_reason: null,
         } as Partial<InternalProcurementRequest>)
         .eq('id', request.id)
       if (error) throw error
 
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: 'Resubmitted After Clarification',
-        entityType: 'internal_procurement_request',
-        entityId: request.id,
-        previousStatus: request.status,
-        newStatus: request.status,
-      })
+      // Audit log + notifications are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: 'Resubmitted After Clarification',
+          entityType: 'internal_procurement_request',
+          entityId: request.id,
+          previousStatus: request.status,
+          newStatus: request.status,
+        })
 
-      const reviewerRole = reviewerRoleForStatus(request.status)
-      if (reviewerRole) {
-        const staff = await getStaffByRole(reviewerRole)
-        await notifyMany(staff.map(s => ({
-          userId: s.id,
-          type: 'proposal_forwarded',
-          title: 'Procurement Request Resubmitted',
-          message: `Request "${capitalizeFirst(itemDescription)}" was resubmitted after clarification and requires your review.`,
-          referenceId: request.id,
-          referenceType: 'internal_procurement',
-        })))
-      }
+        const reviewerRole = reviewerRoleForStatus(request.status)
+        if (reviewerRole) {
+          const staff = await getStaffByRole(reviewerRole)
+          await notifyMany(staff.map(s => ({
+            userId: s.id,
+            type: 'proposal_forwarded',
+            title: 'Procurement Request Resubmitted',
+            message: `Request "${capitalizeFirst(itemDescription)}" was resubmitted after clarification and requires your review.`,
+            referenceId: request.id,
+            referenceType: 'internal_procurement',
+          })))
+        }
+      })()
 
       toast.success('Request resubmitted successfully')
-      router.refresh()
+      router.push('/internal-procurement')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to resubmit')
     } finally {

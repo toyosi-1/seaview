@@ -24,7 +24,7 @@ import type { Profile, Proposal, ProposalStatus, CompletionReport } from '@/type
 // in a <Suspense> boundary by the page, so the header above it can render
 // immediately instead of blocking on every Supabase query below.
 export async function DashboardContent() {
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId } = await getSessionProfile()
   // user/profile are guaranteed non-null here — already enforced by the
   // portal layout and the page before this component is rendered.
   const p = profile as Profile
@@ -37,17 +37,14 @@ export async function DashboardContent() {
   let paymentPendingCount = 0
   let contractorCount = 0
   let recentActivity: Proposal[] = []
+  let supervisorPendingRaw: unknown = []
 
   if (isContractor) {
-    const { data: contractorRaw } = await supabase
-      .from('contractors').select('id').eq('user_id', user!.id).maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-
-    if (contractor) {
+    if (contractorId) {
       const [{ count: pCount }, { count: cCount }, { data: recent }] = await Promise.all([
-        supabase.from('proposals').select('*', { count: 'exact', head: true }).eq('contractor_id', contractor.id),
-        supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('contractor_id', contractor.id),
-        supabase.from('proposals').select('*,contractors(company_name)').eq('contractor_id', contractor.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('proposals').select('id', { count: 'exact', head: true }).eq('contractor_id', contractorId),
+        supabase.from('contracts').select('id', { count: 'exact', head: true }).eq('contractor_id', contractorId),
+        supabase.from('proposals').select('id,proposal_number,title,status,estimated_cost,updated_at,contractors(company_name)').eq('contractor_id', contractorId).order('created_at', { ascending: false }).limit(5),
       ])
       proposalCount = pCount ?? 0
       contractCount = cCount ?? 0
@@ -66,19 +63,28 @@ export async function DashboardContent() {
       { count: payPending },
       { count: conCount },
       { data: recent },
+      supResult,
     ] = await Promise.all([
       // Fetching just the status column lets us derive both the total
       // count and the per-status breakdown from a single round-trip,
       // instead of a separate count(*) query plus 8 more count(*) queries.
       supabase.from('proposals').select('status'),
-      supabase.from('proposals').select('*', { count: 'exact', head: true })
+      supabase.from('proposals').select('id', { count: 'exact', head: true })
         .in('status', ['submitted', 'md_review', 'procurement_appraisal', 'procurement_review', 'head_procurement_review', 'md_final_review', 'ict_assignment']),
-      supabase.from('contracts').select('*', { count: 'exact', head: true }),
-      supabase.from('completion_reports').select('*', { count: 'exact', head: true })
+      supabase.from('contracts').select('id', { count: 'exact', head: true }),
+      supabase.from('completion_reports').select('id', { count: 'exact', head: true })
         .in('status', ['submitted', 'supervisor_review', 'md_verification', 'audit_review', 'accounts_review']),
-      supabase.from('completion_reports').select('*', { count: 'exact', head: true }).in('status', ['accounts_review', 'payment_pending']),
-      supabase.from('contractors').select('*', { count: 'exact', head: true }),
-      supabase.from('proposals').select('*,contractors(company_name)').order('updated_at', { ascending: false }).limit(8),
+      supabase.from('completion_reports').select('id', { count: 'exact', head: true }).in('status', ['accounts_review', 'payment_pending']),
+      supabase.from('contractors').select('id', { count: 'exact', head: true }),
+      supabase.from('proposals').select('id,proposal_number,title,status,estimated_cost,updated_at,contractors(company_name)').order('updated_at', { ascending: false }).limit(8),
+      // Completions awaiting the current user's review as Project Supervisor
+      supabase
+        .from('completion_reports')
+        .select('id,title,submitted_at,contracts!inner(contract_number,project_supervisor_id),contractors(company_name)')
+        .eq('status', 'supervisor_review')
+        .eq('contracts.project_supervisor_id', user!.id)
+        .order('submitted_at', { ascending: false })
+        .limit(10),
     ])
 
     const statuses: ProposalStatus[] = ['submitted', 'md_review', 'procurement_appraisal', 'md_final_review', 'ict_assignment', 'approved', 'rejected', 'returned']
@@ -97,18 +103,10 @@ export async function DashboardContent() {
     paymentPendingCount = payPending ?? 0
     contractorCount = conCount ?? 0
     recentActivity = (recent ?? []) as unknown as Proposal[]
+    supervisorPendingRaw = supResult.data
   }
 
-  // Completions awaiting the current user's review as Project Supervisor (staff only)
-  const { data: supervisorPendingRaw } = isContractor
-    ? { data: [] }
-    : await supabase
-        .from('completion_reports')
-        .select('*,contracts!inner(contract_number,project_supervisor_id),contractors(company_name)')
-        .eq('status', 'supervisor_review')
-        .eq('contracts.project_supervisor_id', user!.id)
-        .order('submitted_at', { ascending: false })
-  const supervisorPending = (supervisorPendingRaw ?? []) as unknown as (CompletionReport & {
+  const supervisorPending = (!isContractor ? (supervisorPendingRaw ?? []) : []) as unknown as (CompletionReport & {
     contracts: { contract_number: string }
     contractors: { company_name: string }
   })[]
@@ -275,7 +273,7 @@ export async function DashboardContent() {
                           href={`/proposals/${proposal.id}`}
                           className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                         >
-                          <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                             <FileText className="w-5 h-5 text-spl-blue" />
                           </div>
                           <div className="flex-1 min-w-[200px]">
@@ -337,7 +335,7 @@ export async function DashboardContent() {
                       href={`/proposals/${proposal.id}`}
                       className="flex flex-wrap items-start gap-4 px-4 py-4 rounded-xl hover:bg-slate-50 transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-spl-blue-light flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-sm bg-spl-blue-light flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-spl-blue" />
                       </div>
                       <div className="flex-1 min-w-[200px]">

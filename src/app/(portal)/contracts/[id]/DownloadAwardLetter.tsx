@@ -12,6 +12,7 @@ interface DownloadAwardLetterProps {
   contractorAddress?: string
   contractorPhone?: string
   contractTitle: string
+  contractDescription: string
   contractValue: number
   awardDate: string
   bidDate?: string
@@ -30,8 +31,8 @@ export function DownloadAwardLetter(props: DownloadAwardLetterProps) {
       const { downloadAwardLetter } = await import('@/components/pdf/AwardLetterPDF')
       await downloadAwardLetter(props)
       toast.success('Award letter downloaded successfully')
-    } catch {
-      toast.error('Failed to generate PDF')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate PDF')
     } finally {
       setLoading(false)
     }

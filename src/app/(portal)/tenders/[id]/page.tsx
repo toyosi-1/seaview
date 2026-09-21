@@ -11,52 +11,37 @@ import type { Profile, Tender, TenderStatus } from '@/types/database'
 
 export default async function TenderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId, contractorStatus } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
 
-  const { data: tenderRaw } = await supabase
-    .from('tenders')
-    .select('*,profiles!tenders_posted_by_fkey(full_name,role)')
-    .eq('id', id)
-    .maybeSingle()
+  const isContractor = p.role === 'contractor'
+  const isContractOfficer = p.role === 'contract_officer'
+  const isSuspended = isContractor && contractorStatus === 'suspended'
+
+  // Build the proposal check query based on role — runs in parallel with tender fetch
+  const proposalCheckQuery = isContractor && contractorId
+    ? supabase.from('proposals').select('id', { count: 'exact', head: true }).eq('tender_id', id).eq('contractor_id', contractorId)
+    : !isContractor
+      ? supabase.from('proposals').select('id', { count: 'exact', head: true }).eq('tender_id', id)
+      : Promise.resolve({ count: 0 } as { count: number | null })
+
+  const [{ data: tenderRaw }, proposalResult] = await Promise.all([
+    supabase
+      .from('tenders')
+      .select('*,profiles!tenders_posted_by_fkey(full_name,role)')
+      .eq('id', id)
+      .maybeSingle(),
+    proposalCheckQuery,
+  ])
 
   if (!tenderRaw) notFound()
   const tender = tenderRaw as unknown as Tender & { profiles?: { full_name: string | null; role: string | null } }
 
-  const isContractor = p.role === 'contractor'
-  const isContractOfficer = p.role === 'contract_officer'
   const status = tender.status as TenderStatus
-
-  // Check if contractor already submitted a proposal for this tender
-  let alreadySubmitted = false
-  if (isContractor) {
-    const { data: contractorRaw } = await supabase
-      .from('contractors')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-    if (contractor) {
-      const { count } = await supabase
-        .from('proposals')
-        .select('id', { count: 'exact', head: true })
-        .eq('tender_id', id)
-        .eq('contractor_id', contractor.id)
-      alreadySubmitted = (count ?? 0) > 0
-    }
-  }
-
-  // Get proposal count for staff
-  let proposalCount = 0
-  if (!isContractor) {
-    const { count } = await supabase
-      .from('proposals')
-      .select('id', { count: 'exact', head: true })
-      .eq('tender_id', id)
-    proposalCount = count ?? 0
-  }
+  const alreadySubmitted = isContractor ? (proposalResult.count ?? 0) > 0 : false
+  const proposalCount = !isContractor ? (proposalResult.count ?? 0) : 0
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -147,7 +132,12 @@ export default async function TenderDetailPage({ params }: { params: Promise<{ i
 
       {/* Action area */}
       <div className="flex gap-4 pb-8">
-        {isContractor && status === 'open' && !alreadySubmitted && (
+        {isContractor && isSuspended && (
+          <div className="bg-spl-danger-bg border border-red-200 rounded-xl px-6 py-4 text-spl-danger font-medium">
+            Your account is suspended. You cannot submit quotations at this time.
+          </div>
+        )}
+        {isContractor && !isSuspended && status === 'open' && !alreadySubmitted && (
           <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-8 text-base font-semibold">
             <Link href={`/proposals/new?tender=${tender.id}`}>
               <Plus className="w-5 h-5 mr-2" />

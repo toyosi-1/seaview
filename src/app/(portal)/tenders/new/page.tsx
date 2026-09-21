@@ -31,7 +31,8 @@ export default function NewTenderPage() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
       const { data: tenderRaw, error } = await supabase
@@ -51,7 +52,9 @@ export default function NewTenderPage() {
       if (!tenderRaw) throw new Error('Failed to create tender')
       const tender = tenderRaw as unknown as { id: string; contract_number: string }
 
-      await logAudit({
+      // Audit log is best-effort — fire-and-forget so navigation isn't
+      // delayed by an extra network round-trip.
+      void logAudit({
         userId: user.id,
         userRole: 'contract_officer',
         action: 'Tender posted',

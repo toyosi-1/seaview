@@ -80,7 +80,8 @@ export function AppraisalDocuments({ proposalId }: AppraisalDocumentsProps) {
     setUploading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
       const uploads = Array.from(files).map(async (file, i) => {

@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Loader2, Save } from 'lucide-react'
 import type { Contractor } from '@/types/database'
+import { useProfileContext } from '@/contexts/ProfileContext'
 
 export function ContractorEditForm({ contractor }: { contractor: Contractor }) {
+  const { updateProfile } = useProfileContext()
   const [companyName, setCompanyName] = useState(contractor.company_name)
   const [cacNumber, setCacNumber] = useState(contractor.cac_number ?? '')
   const [tinNumber, setTinNumber] = useState(contractor.tin_number ?? '')
@@ -36,6 +38,7 @@ export function ContractorEditForm({ contractor }: { contractor: Contractor }) {
         account_name: accountName.trim() || undefined,
       }).eq('id', contractor.id)
       if (error) throw error
+      updateProfile({ contractorCompanyName: companyName.trim() })
       toast.success('Company profile updated successfully')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update profile')

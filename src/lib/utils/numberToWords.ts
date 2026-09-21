@@ -50,8 +50,9 @@ export function numberToWords(value: number): string {
 
 /** Converts a Naira amount into words, e.g. "Two Million, Six Hundred and Fifty Thousand Naira Only" */
 export function nairaToWords(amount: number): string {
-  const whole = Math.floor(amount)
-  const kobo = Math.round((amount - whole) * 100)
+  const totalKobo = Math.round(Math.abs(amount) * 100)
+  const whole = Math.floor(totalKobo / 100)
+  const kobo = totalKobo % 100
   const words = numberToWords(whole)
 
   if (kobo > 0) {

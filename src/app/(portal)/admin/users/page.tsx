@@ -10,10 +10,8 @@ import { formatDate } from '@/lib/utils/format'
 import type { Profile, UserRole } from '@/types/database'
 
 export default async function UsersPage() {
-  const { supabase, user } = await getSessionProfile()
+  const { supabase, user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   if (!profile || (profile as Profile).role !== 'ict_admin') redirect('/dashboard')
 
   const { data: users } = await supabase

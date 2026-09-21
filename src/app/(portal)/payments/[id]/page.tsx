@@ -15,7 +15,7 @@ interface PageProps { params: Promise<{ id: string }> }
 
 export default async function PaymentDetailPage({ params }: PageProps) {
   const { id } = await params
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, contractorId } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
@@ -25,21 +25,26 @@ export default async function PaymentDetailPage({ params }: PageProps) {
     redirect('/dashboard')
   }
 
-  const { data: payment } = await supabase
-    .from('payments')
-    .select('*,contractors(company_name,bank_name,account_number,account_name),contracts(title,contract_number)')
-    .eq('id', id)
-    .maybeSingle()
+  const [{ data: payment }, { data: docs }] = await Promise.all([
+    supabase
+      .from('payments')
+      .select('*,contractors(company_name,bank_name,account_number,account_name),contracts(title,contract_number)')
+      .eq('id', id)
+      .maybeSingle(),
+    supabase.from('payment_documents').select('*').eq('payment_id', id),
+  ])
   if (!payment) notFound()
-
-  const { data: docs } = await supabase
-    .from('payment_documents').select('*').eq('payment_id', id)
 
   const pay = payment as unknown as Payment & {
     contractors: { company_name: string; bank_name: string; account_number: string; account_name: string }
     contracts: { title: string; contract_number: string }
   }
   const status = pay.status as PaymentStatus
+
+  // Contractor access control: only their own payments
+  if (p.role === 'contractor' && (!contractorId || contractorId !== pay.contractor_id)) {
+    redirect('/payments')
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">

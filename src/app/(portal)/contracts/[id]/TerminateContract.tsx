@@ -41,36 +41,36 @@ export function TerminateContract({ contract, profile }: TerminateContractProps)
         .eq('id', contract.id)
       if (error) throw error
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: 'Contract terminated',
-        entityType: 'contract',
-        entityId: contract.id,
-        previousStatus: 'active',
-        newStatus: 'terminated',
-      })
-
-      // Notify contractor
-      const { data: contractorRaw } = await supabase
-        .from('contractors').select('user_id').eq('id', contract.contractor_id).maybeSingle()
-      const contractor = contractorRaw as unknown as { user_id: string } | null
-      if (contractor) {
-        await notify({
-          userId: contractor.user_id,
-          type: 'proposal_rejected',
-          title: 'Contract Terminated',
-          message: `Your contract "${contract.title}" has been terminated. Reason: ${reason.trim()}`,
-          referenceId: contract.id,
-          referenceType: 'contract',
+      // Audit log + contractor notification are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: 'Contract terminated',
+          entityType: 'contract',
+          entityId: contract.id,
+          previousStatus: 'active',
+          newStatus: 'terminated',
         })
-      }
+        const { data: contractorRaw } = await supabase
+          .from('contractors').select('user_id').eq('id', contract.contractor_id).maybeSingle()
+        const contractor = contractorRaw as unknown as { user_id: string } | null
+        if (contractor) {
+          await notify({
+            userId: contractor.user_id,
+            type: 'proposal_rejected',
+            title: 'Contract Terminated',
+            message: `Your contract "${contract.title}" has been terminated. Reason: ${reason.trim()}`,
+            referenceId: contract.id,
+            referenceType: 'contract',
+          })
+        }
+      })()
 
       toast.success('Contract terminated successfully')
       setOpen(false)
       setReason('')
-      router.refresh()
+      router.push('/contracts')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to terminate contract')
     } finally {

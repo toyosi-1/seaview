@@ -76,29 +76,31 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
           .eq('id', request.id)
         if (error) throw error
 
-        await logAudit({
-          userId: profile.id,
-          userRole: profile.role,
-          action: 'Returned for Clarification',
-          entityType: 'internal_procurement_request',
-          entityId: request.id,
-          previousStatus: request.status,
-          newStatus: request.status,
-        })
-
-        await notify({
-          userId: request.requested_by,
-          type: 'procurement_clarification_requested',
-          title: 'Clarification Requested on Procurement Request',
-          message: `Your request "${request.item_description}" needs clarification: ${comment}`,
-          referenceId: request.id,
-          referenceType: 'internal_procurement',
-        })
+        // Audit log + requester notification are best-effort — fire-and-forget.
+        void (async () => {
+          await logAudit({
+            userId: profile.id,
+            userRole: profile.role,
+            action: 'Returned for Clarification',
+            entityType: 'internal_procurement_request',
+            entityId: request.id,
+            previousStatus: request.status,
+            newStatus: request.status,
+          })
+          await notify({
+            userId: request.requested_by,
+            type: 'procurement_clarification_requested',
+            title: 'Clarification Requested on Procurement Request',
+            message: `Your request "${request.item_description}" needs clarification: ${comment}`,
+            referenceId: request.id,
+            referenceType: 'internal_procurement',
+          })
+        })()
 
         toast.success('Clarification request sent to requester')
         setSelected(null)
         setComment('')
-        router.refresh()
+        router.push('/internal-procurement')
         return
       }
 
@@ -120,44 +122,44 @@ export function InternalProcurementActions({ request, profile }: { request: Inte
         .eq('id', request.id)
       if (error) throw error
 
-      // Audit log
-      await logAudit({
-        userId: profile.id,
-        userRole: profile.role,
-        action: selected.label,
-        entityType: 'internal_procurement_request',
-        entityId: request.id,
-        previousStatus: request.status,
-        newStatus: selected.nextStatus,
-      })
+      // Audit log + notifications are best-effort — fire-and-forget.
+      void (async () => {
+        await logAudit({
+          userId: profile.id,
+          userRole: profile.role,
+          action: selected.label,
+          entityType: 'internal_procurement_request',
+          entityId: request.id,
+          previousStatus: request.status,
+          newStatus: selected.nextStatus,
+        })
 
-      // Notify requester
-      await notify({
-        userId: request.requested_by,
-        type: selected.nextStatus === 'rejected' ? 'proposal_rejected' : 'proposal_approved',
-        title: selected.nextStatus === 'rejected' ? 'Procurement Request Rejected' : 'Procurement Request Updated',
-        message: `Your request "${request.item_description}" status: ${INTERNAL_PROCUREMENT_STATUS_LABELS[selected.nextStatus]}.`,
-        referenceId: request.id,
-        referenceType: 'internal_procurement',
-      })
-
-      // Notify next-stage staff on forward/approve
-      if (selected.nextStatus === 'procurement_review') {
-        const staff = await getStaffByRole('head_of_procurement')
-        await notifyMany(staff.map(s => ({
-          userId: s.id,
-          type: 'proposal_forwarded',
-          title: 'Procurement Request Requires Your Action',
-          message: `Request "${request.item_description}" is now in procurement review.`,
+        await notify({
+          userId: request.requested_by,
+          type: selected.nextStatus === 'rejected' ? 'proposal_rejected' : 'proposal_approved',
+          title: selected.nextStatus === 'rejected' ? 'Procurement Request Rejected' : 'Procurement Request Updated',
+          message: `Your request "${request.item_description}" status: ${INTERNAL_PROCUREMENT_STATUS_LABELS[selected.nextStatus]}.`,
           referenceId: request.id,
           referenceType: 'internal_procurement',
-        })))
-      }
+        })
+
+        if (selected.nextStatus === 'procurement_review') {
+          const staff = await getStaffByRole('head_of_procurement')
+          await notifyMany(staff.map(s => ({
+            userId: s.id,
+            type: 'proposal_forwarded',
+            title: 'Procurement Request Requires Your Action',
+            message: `Request "${request.item_description}" is now in procurement review.`,
+            referenceId: request.id,
+            referenceType: 'internal_procurement',
+          })))
+        }
+      })()
 
       toast.success('Action completed successfully')
       setSelected(null)
       setComment('')
-      router.refresh()
+      router.push('/internal-procurement')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Action failed')
     } finally {

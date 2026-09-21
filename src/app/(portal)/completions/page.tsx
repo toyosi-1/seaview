@@ -12,8 +12,7 @@ import type { Profile, CompletionReport, CompletionStatus } from '@/types/databa
 interface PageProps { searchParams: Promise<{ page?: string }> }
 
 export default async function CompletionsPage({ searchParams }: PageProps) {
-  const { supabase, user, profile } = await getSessionProfile()
-  if (!user) redirect('/login')
+  const { supabase, profile, contractorId } = await getSessionProfile()
   if (!profile) redirect('/login')
   const p = profile as Profile
 
@@ -26,13 +25,11 @@ export default async function CompletionsPage({ searchParams }: PageProps) {
   let totalCount = 0
 
   if (p.role === 'contractor') {
-    const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
-    const contractor = contractorRaw as unknown as { id: string } | null
-    if (contractor) {
+    if (contractorId) {
       const { data, count } = await supabase
         .from('completion_reports')
         .select('*,contracts(contract_number)', { count: 'exact' })
-        .eq('contractor_id', contractor.id)
+        .eq('contractor_id', contractorId)
         .order('submitted_at', { ascending: false })
         .range(from, to)
       completions = (data ?? []) as unknown as CompletionReport[]

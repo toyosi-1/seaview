@@ -23,10 +23,11 @@ export async function notify(params: NotifyParams) {
       reference_type: params.referenceType ?? null,
     })
 
-    // Also trigger email notification via edge function
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-email-notification`, {
+    // Also trigger email notification via edge function — fire-and-forget.
+    // This is best-effort and can be slow (cold starts, SMTP send time), so
+    // it must not block notify() from resolving.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-email-notification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,10 +39,10 @@ export async function notify(params: NotifyParams) {
           title: params.title,
           message: params.message,
         }),
+      }).catch(() => {
+        // Email is best-effort — don't fail the notification
       })
-    } catch {
-      // Email is best-effort — don't fail the notification
-    }
+    })
   } catch {
     // Non-blocking — notifications are best-effort
   }

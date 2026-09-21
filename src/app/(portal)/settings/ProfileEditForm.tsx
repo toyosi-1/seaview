@@ -9,8 +9,10 @@ import { toast } from 'sonner'
 import { Loader2, Save } from 'lucide-react'
 import type { Profile } from '@/types/database'
 import { ROLE_LABELS } from '@/lib/constants'
+import { useProfileContext } from '@/contexts/ProfileContext'
 
 export function ProfileEditForm({ profile }: { profile: Profile }) {
+  const { updateProfile } = useProfileContext()
   const isStaff = profile.role !== 'contractor'
   const [fullName, setFullName] = useState(profile.full_name ?? '')
   const [phone, setPhone] = useState(profile.phone ?? '')
@@ -25,6 +27,7 @@ export function ProfileEditForm({ profile }: { profile: Profile }) {
       if (!isStaff) update.full_name = fullName.trim() || null
       const { error } = await supabase.from('profiles').update(update as Partial<Profile>).eq('id', profile.id)
       if (error) throw error
+      if (!isStaff) updateProfile({ fullName: fullName.trim() || null })
       toast.success('Profile updated successfully')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to update profile')

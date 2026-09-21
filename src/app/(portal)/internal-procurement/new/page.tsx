@@ -32,7 +32,8 @@ export default function NewInternalProcurementPage() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
       const qty = Number(quantity)
@@ -63,26 +64,28 @@ export default function NewInternalProcurementPage() {
       if (!data) throw new Error('Failed to create procurement request')
       const created = data as unknown as { id: string }
 
-      // Audit log
-      await logAudit({
-        userId: user.id,
-        userRole: userRole,
-        action: 'Internal procurement request submitted',
-        entityType: 'internal_procurement_request',
-        entityId: created.id,
-        newStatus: 'submitted',
-      })
-
-      // Notify MD
-      const mdStaff = await getStaffByRole('md')
-      await notifyMany(mdStaff.map(s => ({
-        userId: s.id,
-        type: 'proposal_submitted',
-        title: 'New Procurement Request',
-        message: `A new procurement request "${capitalizeFirst(itemDescription)}" has been submitted.`,
-        referenceId: created.id,
-        referenceType: 'internal_procurement',
-      })))
+      // Audit log + MD notification are best-effort — fire-and-forget so the
+      // user doesn't wait on extra network round-trips after the request
+      // itself has already been saved.
+      void (async () => {
+        await logAudit({
+          userId: user.id,
+          userRole: userRole,
+          action: 'Internal procurement request submitted',
+          entityType: 'internal_procurement_request',
+          entityId: created.id,
+          newStatus: 'submitted',
+        })
+        const mdStaff = await getStaffByRole('md')
+        await notifyMany(mdStaff.map(s => ({
+          userId: s.id,
+          type: 'proposal_submitted',
+          title: 'New Procurement Request',
+          message: `A new procurement request "${capitalizeFirst(itemDescription)}" has been submitted.`,
+          referenceId: created.id,
+          referenceType: 'internal_procurement',
+        })))
+      })()
 
       toast.success('Procurement request submitted successfully!')
       router.push(`/internal-procurement/${created.id}`)

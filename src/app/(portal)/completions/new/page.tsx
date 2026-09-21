@@ -23,6 +23,7 @@ export default function NewCompletionPage() {
 
   const [loading, setLoading] = useState(false)
   const [contract, setContract] = useState<Contract | null>(null)
+  const [existingCompletionId, setExistingCompletionId] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [completionReport, setCompletionReport] = useState<File | null>(null)
@@ -32,9 +33,35 @@ export default function NewCompletionPage() {
   useEffect(() => {
     if (!contractId) return
     const supabase = createClient()
-    supabase.from('contracts').select('*').eq('id', contractId).maybeSingle().then(({ data }) => {
-      if (data) setContract(data as unknown as Contract)
-    })
+    supabase
+      .from('completion_reports')
+      .select('id')
+      .eq('contract_id', contractId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setExistingCompletionId((data as { id: string } | null)?.id ?? null))
+    supabase
+      .from('contracts')
+      .select('*,proposals(title,description,tenders(title,description))')
+      .eq('id', contractId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return
+        const c = data as unknown as Contract & {
+          proposals?: {
+            title?: string | null
+            description?: string | null
+            tenders?: { title?: string | null; description?: string | null } | null
+          } | null
+        }
+        setContract(c)
+        const derivedTitle = c.title || c.proposals?.title || c.proposals?.tenders?.title || ''
+        const derivedDescription =
+          c.proposals?.description || c.proposals?.tenders?.description || ''
+        if (derivedTitle) setTitle(derivedTitle)
+        if (derivedDescription) setDescription(derivedDescription)
+      })
   }, [contractId])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,12 +78,26 @@ export default function NewCompletionPage() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
-      const { data: contractorRaw } = await supabase.from('contractors').select('id').eq('user_id', user.id).maybeSingle()
+      const { data: contractorRaw } = await supabase.from('contractors').select('id,status').eq('user_id', user.id).maybeSingle()
       if (!contractorRaw) throw new Error('Contractor profile not found')
-      const contractor = contractorRaw as unknown as { id: string }
+      const contractor = contractorRaw as unknown as { id: string; status: string }
+      if (contractor.status !== 'active') throw new Error('Your contractor account is suspended. You cannot submit completion reports.')
+
+      const { data: existingRaw } = await supabase
+        .from('completion_reports')
+        .select('id')
+        .eq('contract_id', contractId)
+        .limit(1)
+        .maybeSingle()
+      const existing = existingRaw as { id: string } | null
+      if (existing) {
+        setExistingCompletionId(existing.id)
+        throw new Error('A completion report already exists for this contract. Open it to continue the workflow.')
+      }
 
       const { data: crRaw, error } = await supabase
         .from('completion_reports')
@@ -109,30 +150,32 @@ export default function NewCompletionPage() {
       if (supporting) Array.from(supporting).forEach((f, i) => uploads.push(uploadFile(f, 'supporting', i)))
       await Promise.all(uploads)
 
-      // Audit log
-      await logAudit({
-        userId: user.id,
-        userRole: 'contractor',
-        action: 'Completion report submitted',
-        entityType: 'completion_report',
-        entityId: cr.id,
-        newStatus: 'supervisor_review',
-      })
-
-      // Notify project supervisor
-      const { data: contractRaw } = await supabase
-        .from('contracts').select('project_supervisor_id').eq('id', contractId).maybeSingle()
-      const typedContract2 = contractRaw as unknown as { project_supervisor_id: string | null } | null
-      if (typedContract2?.project_supervisor_id) {
-        await notify({
-          userId: typedContract2.project_supervisor_id,
-          type: 'completion_submitted',
-          title: 'Completion Report Requires Your Review',
-          message: `A completion report "${title.trim()}" has been submitted and requires your review.`,
-          referenceId: cr.id,
-          referenceType: 'completion',
+      // Audit log + supervisor notification are best-effort — fire-and-forget
+      // so the user doesn't wait on extra network round-trips after the
+      // report itself has already been saved.
+      void (async () => {
+        await logAudit({
+          userId: user.id,
+          userRole: 'contractor',
+          action: 'Completion report submitted',
+          entityType: 'completion_report',
+          entityId: cr.id,
+          newStatus: 'supervisor_review',
         })
-      }
+        const { data: contractRaw } = await supabase
+          .from('contracts').select('project_supervisor_id').eq('id', contractId).maybeSingle()
+        const typedContract2 = contractRaw as unknown as { project_supervisor_id: string | null } | null
+        if (typedContract2?.project_supervisor_id) {
+          await notify({
+            userId: typedContract2.project_supervisor_id,
+            type: 'completion_submitted',
+            title: 'Completion Report Requires Your Review',
+            message: `A completion report "${title.trim()}" has been submitted and requires your review.`,
+            referenceId: cr.id,
+            referenceType: 'completion',
+          })
+        }
+      })()
 
       toast.success('Completion report submitted successfully!')
       router.push(`/completions/${cr.id}`)
@@ -155,20 +198,35 @@ export default function NewCompletionPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {existingCompletionId && (
+        <Card className="border border-amber-200 bg-spl-warning-bg shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-bold text-slate-800">A completion report already exists</h2>
+            <p className="text-sm text-slate-600 mt-1 mb-4">Use the existing report to respond to corrections and continue its approval workflow. A second report cannot be submitted for the same contract.</p>
+            <Button asChild className="bg-spl-blue hover:bg-spl-blue-dark text-white">
+              <Link href={`/completions/${existingCompletionId}`}>Open Existing Completion Report</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <form onSubmit={handleSubmit} className={existingCompletionId ? 'hidden' : 'space-y-6'}>
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-slate-700">Completion Details</CardTitle>
             <CardDescription>Describe the completed work and provide evidence</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            <p className="text-sm text-slate-500">
+              Title and description are pre-filled from the contract. You can edit them if needed.
+            </p>
             <div className="space-y-2">
               <Label className="text-base font-medium">Report Title *</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Warehouse Construction – Completion Report" className="h-12 text-base" required />
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Report title" className="h-12 text-base" required />
             </div>
             <div className="space-y-2">
               <Label className="text-base font-medium">Description of Work Completed *</Label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what was accomplished, key milestones achieved, and any relevant details..." className="min-h-[120px] text-base resize-none" required />
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description of work completed" className="min-h-[120px] text-base resize-none" required />
             </div>
           </CardContent>
         </Card>
