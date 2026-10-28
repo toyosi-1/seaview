@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
+import { toast } from 'sonner'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useNotificationsContext } from '@/contexts/NotificationsContext'
@@ -24,6 +25,7 @@ import {
   Users,
   Settings,
   LogOut,
+  Loader2,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -67,11 +69,29 @@ interface SidebarProps {
   profile: Profile
 }
 
+function NavigationIcon({ icon: Icon, active, label }: { icon: React.ElementType; active: boolean; label: string }) {
+  const { pending } = useLinkStatus()
+  return (
+    <span className="flex w-[18px] h-[18px] shrink-0 items-center justify-center">
+      {pending ? (
+        <>
+          <Loader2 className="w-[18px] h-[18px] animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          <span role="status" className="sr-only">Opening {label}…</span>
+        </>
+      ) : (
+        <Icon className={cn('w-[18px] h-[18px]', active ? 'text-white' : 'text-blue-200/60 group-hover:text-white')} aria-hidden="true" />
+      )}
+    </span>
+  )
+}
+
 export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const logoutInFlight = useRef(false)
   // Shared with TopBar via NotificationsProvider — a single fetch/subscription
   // and a single unread count, so marking notifications read anywhere (the
   // TopBar bell dropdown, or the /notifications page) updates this badge
@@ -94,9 +114,22 @@ export function Sidebar({ profile }: SidebarProps) {
   }, [pathname])
 
   async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
+    if (logoutInFlight.current) return
+    logoutInFlight.current = true
+    setSigningOut(true)
+    try {
+      const { error } = await createClient().auth.signOut()
+      if (error) throw error
+      window.location.replace('/login')
+    } catch {
+      logoutInFlight.current = false
+      setSigningOut(false)
+      toast.error('Could not sign out. Please check your connection and try again.')
+    }
+  }
+
+  function prefetchDestination(href: string) {
+    if (!signingOut && href !== '/notifications' && href !== pathname) router.prefetch(href)
   }
 
   const displayName = profile.role === 'contractor'
@@ -121,13 +154,13 @@ export function Sidebar({ profile }: SidebarProps) {
           onClick={() => setMobileOpen(false)}
         />
       )}
-      <aside className={cn(
-        'fixed left-0 top-0 h-full bg-spl-blue-dark text-white flex flex-col z-40 transition-all duration-300',
+      <aside data-collapsed={collapsed} className={cn(
+        'peer fixed left-0 top-0 h-dvh bg-spl-blue-dark text-white flex flex-col z-40 transition-[width,transform] duration-200 motion-reduce:transition-none',
         collapsed ? 'w-16' : 'w-64',
         mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       )}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+      <div className={cn('flex items-center justify-between gap-2 px-4 py-4 border-b border-white/10', collapsed && 'flex-col px-2')}>
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center flex-shrink-0 p-1">
@@ -146,6 +179,8 @@ export function Sidebar({ profile }: SidebarProps) {
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
           className={cn(
             'w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-colors hidden md:flex',
             collapsed && 'mx-auto mt-2'
@@ -157,6 +192,7 @@ export function Sidebar({ profile }: SidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
           className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 md:hidden"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -172,8 +208,17 @@ export function Sidebar({ profile }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={item.href === '/notifications' ? false : undefined}
+              onMouseEnter={() => prefetchDestination(item.href)}
+              onFocus={() => prefetchDestination(item.href)}
+              onNavigate={event => {
+                if (logoutInFlight.current) event.preventDefault()
+                else setMobileOpen(false)
+              }}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={collapsed ? item.label : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group relative',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-white group relative',
                 isActive
                   ? 'bg-spl-blue text-white shadow-sm'
                   : 'text-blue-100/70 hover:bg-white/10 hover:text-white',
@@ -181,7 +226,7 @@ export function Sidebar({ profile }: SidebarProps) {
               )}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className={cn('w-[18px] h-[18px] flex-shrink-0', isActive ? 'text-white' : 'text-blue-200/60 group-hover:text-white')} />
+              <NavigationIcon icon={Icon} active={isActive} label={item.label} />
               {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
               {item.href === '/notifications' && unreadCount > 0 && (
                 <span className={cn(
@@ -219,14 +264,17 @@ export function Sidebar({ profile }: SidebarProps) {
           type="button"
           variant="ghost"
           onClick={handleLogout}
+          disabled={signingOut}
+          aria-busy={signingOut}
+          aria-label={signingOut ? 'Signing out' : 'Sign out'}
           className={cn(
             'mt-2 text-blue-200/60 hover:text-white hover:bg-white/10',
             collapsed ? 'w-full justify-center px-2' : 'w-full justify-start gap-2'
           )}
           title={collapsed ? 'Sign Out' : undefined}
         >
-          <LogOut className="w-4 h-4" />
-          {!collapsed && <span className="text-sm">Sign Out</span>}
+          {signingOut ? <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> : <LogOut className="w-4 h-4" />}
+          {!collapsed && <span className="text-sm">{signingOut ? 'Signing out…' : 'Sign Out'}</span>}
         </Button>
       </div>
     </aside>

@@ -1,4 +1,6 @@
+import { Suspense } from 'react'
 import { getSessionProfile } from '@/lib/supabase/session'
+import { PaginationControls, PAGE_SIZE } from '@/components/ui/pagination-controls'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -7,19 +9,19 @@ import { ROLE_LABELS } from '@/lib/constants'
 import { formatDateTime } from '@/lib/utils/format'
 import type { Profile, AuditLog, UserRole } from '@/types/database'
 
-export default async function AuditLogPage() {
-  const { supabase, user, profile } = await getSessionProfile()
+interface PageProps { searchParams: Promise<{ page?: string }> }
+
+export default async function AuditLogPage({ searchParams }: PageProps) {
+  const { user, profile } = await getSessionProfile()
   if (!user) redirect('/login')
   if (!profile) redirect('/login')
   const p = profile as Profile
 
   if (!['md', 'ict_admin'].includes(p.role)) redirect('/dashboard')
 
-  const { data: logs } = await supabase
-    .from('audit_logs')
-    .select('*,profiles(full_name,email)')
-    .order('created_at', { ascending: false })
-    .limit(200)
+  const { page } = await searchParams
+  const requestedPage = Number(page ?? 1)
+  const currentPage = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -28,11 +30,45 @@ export default async function AuditLogPage() {
         <p className="text-slate-500 mt-1">Complete immutable record of all system actions</p>
       </div>
 
+      <Suspense key={currentPage} fallback={<AuditLogLoading />}>
+        <AuditLogEntries currentPage={currentPage} />
+      </Suspense>
+    </div>
+  )
+}
+
+function AuditLogLoading() {
+  return (
+    <Card className="border-0 shadow-sm" role="status" aria-label="Loading audit entries">
+      <CardContent className="space-y-3 animate-pulse motion-reduce:animate-none">
+        <span className="sr-only">Loading audit entries…</span>
+        {Array.from({ length: 5 }, (_, index) => (
+          <div key={index} aria-hidden="true" className="h-20 rounded-xl bg-slate-100" />
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+async function AuditLogEntries({ currentPage }: { currentPage: number }) {
+  const { supabase } = await getSessionProfile()
+  const from = (currentPage - 1) * PAGE_SIZE
+  const { data: logs, count, error } = await supabase
+    .from('audit_logs')
+    .select('id,action,user_role,entity_type,previous_status,new_status,created_at,profiles(full_name,email)', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, from + PAGE_SIZE - 1)
+  if (error) throw new Error('Unable to load the audit log. Please try again.')
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
+  if (currentPage > totalPages) redirect(`/audit-log?page=${totalPages}`)
+
+  return (
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold text-slate-700 flex items-center gap-2">
             <ScrollText className="w-5 h-5" />
-            Activity Log ({logs?.length ?? 0} recent entries)
+            Activity Log ({count ?? 0} entries)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -84,8 +120,8 @@ export default async function AuditLogPage() {
               })}
             </div>
           )}
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath="/audit-log" />
         </CardContent>
       </Card>
-    </div>
   )
 }

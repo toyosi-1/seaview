@@ -118,7 +118,7 @@ export function TopBar({ profile, contractorId }: { profile: Profile; contractor
   }, [query, contractorId, profile.role])
 
   return (
-    <header className="h-16 bg-white border-b border-spl-border flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-14 lg:pl-6">
+    <header className="h-16 bg-white border-b border-spl-border flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-30 pl-16 md:pl-6">
       {/* Home button */}
       <Link href="/dashboard" aria-label="Dashboard" className="flex items-center gap-2 text-slate-600 hover:text-spl-blue transition-colors flex-shrink-0">
         <div className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-spl-blue-light flex items-center justify-center transition-colors">
@@ -143,7 +143,7 @@ export function TopBar({ profile, contractorId }: { profile: Profile; contractor
           )}
         </div>
         {(results.length > 0 || (searching && query.length >= 2)) && (
-          <div className="absolute top-12 left-0 right-0 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50">
+          <div className="absolute top-12 left-0 right-0 bg-white rounded-xl shadow-xl border border-slate-200 max-h-[min(420px,calc(100dvh-5rem))] overflow-y-auto overscroll-contain z-50">
             {searching && (
               <div className="px-4 py-3 text-sm text-slate-500">Searching...</div>
             )}
@@ -169,7 +169,7 @@ export function TopBar({ profile, contractorId }: { profile: Profile; contractor
       </div>
 
       {/* Notifications */}
-      <div className="relative" ref={notifRef}>
+      <div className="relative ml-auto" ref={notifRef}>
         <Button
           type="button"
           variant="ghost"
@@ -188,7 +188,7 @@ export function TopBar({ profile, contractorId }: { profile: Profile; contractor
         </Button>
 
         {showNotifications && (
-          <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-[480px] overflow-y-auto">
+          <div className="absolute right-0 top-12 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-[min(480px,calc(100dvh-5rem))] overflow-y-auto overscroll-contain">
             <div className="sticky top-0 bg-white px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800">Notifications</h3>
               <Link href="/notifications" className="text-xs text-spl-blue hover:text-spl-blue-dark">View all</Link>

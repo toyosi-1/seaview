@@ -28,17 +28,17 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Greeting — renders immediately, independent of the data fetches below */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 break-words">
             {greeting()}, {p.full_name?.split(' ')[0] ?? ROLE_LABELS[p.role as UserRole]}
           </h1>
-          <p className="text-spl-text-muted text-lg mt-1">
+          <p className="text-spl-text-muted text-sm sm:text-base mt-2">
             {new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         {isContractor && !isSuspended && (
-          <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-12 px-6 text-base font-semibold">
+          <Button asChild size="lg" className="bg-spl-blue hover:bg-spl-blue-dark text-white h-11 w-full sm:w-auto px-4 sm:px-6 text-sm font-semibold">
             <Link href="/tenders">
               <Briefcase className="w-5 h-5 mr-2" />
               Browse Available Contracts

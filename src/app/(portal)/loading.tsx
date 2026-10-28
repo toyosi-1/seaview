@@ -1,9 +1,18 @@
 export default function PortalLoading() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-spl-blue border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-slate-400">Loading…</p>
+    <div role="status" aria-label="Loading page" className="space-y-6 max-w-7xl mx-auto">
+      <span className="sr-only">Loading page…</span>
+      <div aria-hidden="true" className="space-y-6 animate-pulse motion-reduce:animate-none">
+        <div className="space-y-3">
+          <div className="h-8 w-48 rounded-lg bg-slate-100" />
+          <div className="h-4 w-64 max-w-full rounded bg-slate-100" />
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-white p-5 sm:p-6 space-y-5">
+          <div className="h-5 w-36 rounded bg-slate-100" />
+          {Array.from({ length: 5 }, (_, index) => (
+            <div key={index} className="h-16 rounded-lg bg-slate-100" />
+          ))}
+        </div>
       </div>
     </div>
   )

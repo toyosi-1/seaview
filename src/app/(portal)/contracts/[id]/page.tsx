@@ -11,6 +11,7 @@ import { DEPARTMENT_LABELS, ROLE_LABELS, DEPARTMENT_HEAD_ROLE } from '@/lib/cons
 import { DownloadAwardLetter } from './DownloadAwardLetter'
 import { TerminateContract } from './TerminateContract'
 import { CompletionPeriodEditor } from './CompletionPeriodEditor'
+import { DepartmentEditor } from './DepartmentEditor'
 import type { Profile, Contract, UserRole } from '@/types/database'
 
 interface PageProps { params: Promise<{ id: string }> }
@@ -46,11 +47,11 @@ export default async function ContractDetailPage({ params }: PageProps) {
   // resolve the current department head's role/name dynamically.
   const supervisorRole = c.responsible_department ? DEPARTMENT_HEAD_ROLE[c.responsible_department] : null
 
-  const [{ data: mdProfileRaw }, { data: departmentHeadRaw }] = await Promise.all([
+  const [{ data: signatoryRaw }, { data: departmentHeadRaw }] = await Promise.all([
     supabase
       .from('profiles')
       .select('full_name,signature_url,role')
-      .eq('role', 'md')
+      .eq('role', 'head_of_procurement')
       .eq('is_active', true)
       .maybeSingle(),
     supervisorRole
@@ -62,7 +63,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ])
-  const mdProfile = mdProfileRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
+  const signatory = signatoryRaw as unknown as { full_name: string; signature_url: string | null; role: UserRole } | null
   const departmentHead = departmentHeadRaw as unknown as { full_name: string | null; role: UserRole } | null
 
   const INTERNAL_EDIT_ROLES: UserRole[] = ['md', 'head_of_procurement', 'ict_admin']
@@ -140,7 +141,11 @@ export default async function ContractDetailPage({ params }: PageProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Responsible Department</p>
-                      <p className="font-semibold text-slate-800 mt-0.5">{DEPARTMENT_LABELS[c.responsible_department]}</p>
+                      <DepartmentEditor
+                        contractId={c.id}
+                        department={c.responsible_department}
+                        editable={p.role === 'ict_admin'}
+                      />
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Project Supervisor</p>
@@ -171,8 +176,8 @@ export default async function ContractDetailPage({ params }: PageProps) {
                     awardDate={c.awarded_at}
                     bidDate={c.proposals?.submitted_at ?? undefined}
                     completionPeriod={c.completion_period ?? undefined}
-                    mdName={mdProfile?.full_name ?? 'Managing Director'}
-                    mdSignatureUrl={mdProfile?.signature_url ?? undefined}
+                    signatoryName={signatory?.full_name ?? 'Head, Procurement'}
+                    signatorySignatureUrl={signatory?.signature_url ?? undefined}
                     responsibleDepartment={c.responsible_department ? DEPARTMENT_LABELS[c.responsible_department] : undefined}
                   />
                 </>

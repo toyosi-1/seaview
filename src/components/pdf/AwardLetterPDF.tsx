@@ -20,20 +20,20 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: 'NotoSans',
     fontSize: 10,
-    paddingTop: 30,
-    paddingBottom: 68,
+    paddingTop: 26,
+    paddingBottom: 64,
     paddingHorizontal: 55,
     color: '#1a1a2e',
     backgroundColor: '#ffffff',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   logoImage: {
-    width: 56,
-    height: 56,
-    marginBottom: 4,
+    width: 52,
+    height: 52,
+    marginBottom: 3,
     objectFit: 'contain',
   },
   orgNameRow: {
@@ -62,27 +62,27 @@ const styles = StyleSheet.create({
   },
   headerRule: {
     borderBottom: '2px solid #1a1a2e',
-    marginTop: 7,
-    marginBottom: 14,
+    marginTop: 6,
+    marginBottom: 11,
   },
   refDateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 11,
   },
   refDateText: {
     fontSize: 10,
   },
   addressBlock: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   addressLine: {
     fontSize: 10.5,
-    lineHeight: 1.5,
+    lineHeight: 1.45,
   },
   salutation: {
     fontSize: 10,
-    marginBottom: 9,
+    marginBottom: 6,
   },
   subject: {
     fontSize: 10.5,
@@ -97,12 +97,12 @@ const styles = StyleSheet.create({
     fontFamily: 'NotoSans',
     fontWeight: 'bold',
     textDecoration: 'underline',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   bodyText: {
     fontSize: 9.5,
-    lineHeight: 1.4,
-    marginBottom: 7,
+    lineHeight: 1.35,
+    marginBottom: 6,
     textAlign: 'justify',
   },
   boldInline: {
@@ -110,22 +110,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   signatureBlock: {
-    marginTop: 6,
+    marginTop: 3,
   },
   closing: {
     fontSize: 10,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   sigImageWrap: {
-    width: 155,
-    height: 54,
+    width: 150,
+    height: 44,
     marginBottom: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   sigImage: {
-    width: 155,
-    height: 52,
+    width: 150,
+    height: 42,
     objectFit: 'contain',
     objectPosition: 'left center',
   },
@@ -138,7 +138,8 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   sigTitle: {
-    fontSize: 10,
+    fontSize: 9.5,
+    lineHeight: 1.3,
     color: '#1a1a2e',
   },
   footer: {
@@ -182,8 +183,8 @@ interface AwardLetterData {
   awardDate: string
   bidDate?: string
   completionPeriod?: string
-  mdName?: string
-  mdSignatureUrl?: string
+  signatoryName?: string
+  signatorySignatureUrl?: string
   responsibleDepartment?: string
 }
 
@@ -214,15 +215,15 @@ function completionWording(completionPeriod: string | undefined, department: str
     .replace(/[.;,]+$/, '')
     .replace(/,?\s*(?:commencing\s+)?from the date of acceptance of this offer$/i, '')
   if (!period) {
-    return `with a completion period to be agreed with the Head, ${department}, commencing from the date of acceptance of this offer`
+    return `with a completion period to be agreed with the Head, ${department}, from the date of acceptance of this offer`
   }
-  if (/^(a period |a completion period )/i.test(period)) {
-    return `with ${period}, commencing from the date of acceptance of this offer`
+  if (/^completion period of /i.test(period)) {
+    return `with a ${period} from the date of acceptance of this offer`
   }
   if (/^to be agreed/i.test(period)) {
-    return `with a completion period ${period}, commencing from the date of acceptance of this offer`
+    return `with a completion period ${period}, from the date of acceptance of this offer`
   }
-  return `with a completion period of ${period}, commencing from the date of acceptance of this offer`
+  return `with a completion period of ${period} from the date of acceptance of this offer`
 }
 
 function validateAwardLetterData(data: AwardLetterData): void {
@@ -233,7 +234,7 @@ function validateAwardLetterData(data: AwardLetterData): void {
     ['contract description', data.contractDescription],
     ['award date', data.awardDate],
     ['responsible department', data.responsibleDepartment],
-    ['authorized signatory', data.mdName],
+    ['authorized signatory', data.signatoryName],
   ].filter(([, value]) => !cleanText(value as string | undefined)).map(([label]) => label)
 
   if (!Number.isFinite(data.contractValue) || data.contractValue <= 0) missing.push('contract amount')
@@ -281,7 +282,7 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
         {/* Addressee */}
         <View style={styles.addressBlock}>
           <Text style={styles.addressLine}>The Managing Director,</Text>
-          <Text style={styles.addressLine}>Messrs. {data.contractorName},</Text>
+          <Text style={styles.addressLine}>{data.contractorName},</Text>
           {cleanText(data.contractorAddress) && (
             <Text style={styles.addressLine}>{cleanText(data.contractorAddress).replace(/[,.]+$/, '')},</Text>
           )}
@@ -290,46 +291,48 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
 
         <Text style={styles.salutation}>Dear Sir,</Text>
 
-        <Text style={styles.subject}>CONTRACT FOR {data.contractTitle.toUpperCase()}</Text>
+        <Text style={styles.subject}>CONTRACT FOR {cleanText(data.contractDescription).toUpperCase()}</Text>
         <Text style={styles.noticeTitle}>NOTIFICATION OF AWARD</Text>
 
         <Text style={styles.bodyText}>
-          We are pleased to convey the approval granted by the Management of Seaview Properties Limited on {formatOrdinalDate(data.awardDate)} in respect of your bid{data.bidDate ? ` dated ${formatOrdinalDate(data.bidDate)}` : ''} for the execution of {cleanText(data.contractDescription)}, at a contract sum of {formattedValue} ({valueInWords}), inclusive of {VAT_RATE}% VAT, {completionClause}.
+          This is to convey the Management of Seaview Properties Limited&apos;s approval of {formatOrdinalDate(data.awardDate)} in respect of your bid{data.bidDate ? ` dated ${formatOrdinalDate(data.bidDate)}` : ''} for {cleanText(data.contractDescription)} at a contract sum of {formattedValue} ({valueInWords}) only, inclusive of {VAT_RATE}% VAT, {completionClause}.
         </Text>
 
         <Text style={styles.bodyText}>
-          Upon acceptance of this offer, you are required to contact the Head, Legal Services, to execute the Contract Agreement. <Text style={styles.boldInline}>Please note that {STAMP_DUTY_RATE}% shall be deducted from the total contract sum as stamp duty payable to FIRS.</Text>
+          Upon acceptance of this offer, you are required to contact the Head, Legal Services for the signing of the Contract Agreement. <Text style={styles.boldInline}>Note that {STAMP_DUTY_RATE}% shall be deducted from the total contract sum as stamp duty to be paid to FIRS.</Text>
         </Text>
 
         <Text style={styles.bodyText}>
-          The work shall be executed in accordance with the specifications detailed in the tender document (copy attached). Accordingly, you are required to contact the Head, {department}, who will nominate an officer to supervise the work. Representatives of the {departmentList} Departments shall witness the completion of the work.
+          The work shall be executed in accordance with the given specification as detailed in the tender document (copy attached). In this regard, you are required to contact the Head, {department}, who will nominate an officer to supervise the job. The representatives of {departmentList} Departments shall witness the completion of the job.
         </Text>
 
         <Text style={styles.bodyText}>
-          Payment of the contract sum shall be made upon satisfactory performance and certification by the Heads of the {departmentList} Departments.
+          Payment of the contract sum shall be made upon satisfactory performance and upon certification by the Heads of {departmentList} Departments.
         </Text>
 
         <Text style={styles.bodyText}>
-          Please note that no cost escalation shall apply to this contract.
+          Please note that there shall be no cost escalation on this contract.
         </Text>
 
         <Text style={styles.bodyText}>
-          Kindly communicate whether you accept this offer within seven (7) days of receipt of this letter, failing which the offer shall lapse.
+          Kindly indicate your acceptance or otherwise of this offer within Seven (7) days of the receipt of this letter, after which the offer shall lapse.
         </Text>
 
         <View style={styles.signatureBlock} wrap={false}>
           <Text style={styles.closing}>Yours faithfully,</Text>
           <View style={styles.sigImageWrap}>
-            {data.mdSignatureUrl && (
+            {data.signatorySignatureUrl && (
               <>
                 {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image src={data.mdSignatureUrl} style={styles.sigImage} />
+                <Image src={data.signatorySignatureUrl} style={styles.sigImage} />
               </>
             )}
           </View>
-          <Text style={styles.sigName}>{data.mdName}</Text>
-          <Text style={styles.sigTitle}>Managing Director</Text>
-          <Text style={styles.sigTitle}>For: Seaview Properties Limited</Text>
+          <Text style={styles.sigName}>{data.signatoryName}</Text>
+          <Text style={styles.sigTitle}>Head, Procurement</Text>
+          <Text style={styles.sigTitle}>For: Managing Director</Text>
+          <Text style={styles.sigTitle}>Seaview Properties Limited</Text>
+          <Text style={styles.sigTitle}>(A Subsidiary of Nigerian Ports Authority)</Text>
         </View>
 
         {/* Footer */}
@@ -347,8 +350,12 @@ function AwardLetterDoc({ data }: { data: AwardLetterData }) {
   )
 }
 
+export async function generateAwardLetterBlob(data: AwardLetterData): Promise<Blob> {
+  return pdf(<AwardLetterDoc data={data} />).toBlob()
+}
+
 export async function downloadAwardLetter(data: AwardLetterData) {
-  const blob = await pdf(<AwardLetterDoc data={data} />).toBlob()
+  const blob = await generateAwardLetterBlob(data)
   saveAs(blob, `Award-Letter-${data.contractNumber}.pdf`)
 }
 

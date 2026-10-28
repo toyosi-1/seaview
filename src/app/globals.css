@@ -95,7 +95,7 @@
   --chart-3: #B45309;
   --chart-4: #123047;
   --chart-5: #64748B;
-  --radius: 0;
+  --radius: 0.5rem;
   --sidebar: #06649F;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #0878C9;
@@ -149,5 +149,22 @@
   }
   html {
     @apply font-sans;
+  }
+  .portal-content :where(h1) {
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+  .portal-content :where(th) {
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .portal-content :where(td) {
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+  }
+  :where(a, button):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
   }
 }
