@@ -223,10 +223,22 @@ export function ApprovalPanel({ proposal, profile }: ApprovalPanelProps) {
               ? 'Appraisal Notes *'
               : 'Add Comment / Minutes *'}
           </Label>
+          {(proposal.status === 'procurement_appraisal' || proposal.status === 'procurement_review') && (
+            <p className="text-xs text-slate-500 leading-relaxed">
+              A sound appraisal covers: price reasonableness against the estimated budget and market
+              rates, the contractor&apos;s technical capability and track record, completeness of
+              submitted documents, proposed delivery timeline, and a clear recommendation to the MD.
+              Attach the evaluation report below under Supporting Appraisal Documents if available.
+            </p>
+          )}
           <Textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
-            placeholder="Add your comments, observations, or minutes regarding this quotation..."
+            placeholder={
+              proposal.status === 'procurement_appraisal' || proposal.status === 'procurement_review'
+                ? 'e.g. The quoted sum is within the approved estimate. The contractor has completed similar work satisfactorily and all required documents are in order. Recommend award...'
+                : 'Add your comments, observations, or minutes regarding this quotation...'
+            }
             className="min-h-[100px] bg-white resize-none text-base"
           />
         </div>

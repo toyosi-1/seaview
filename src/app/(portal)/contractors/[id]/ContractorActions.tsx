@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Ban, RotateCcw } from 'lucide-react'
+import { Ban, RotateCcw, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contractor, Proposal, UserRole } from '@/types/database'
 import { notify, logAudit } from '@/lib/utils/notify'
@@ -97,6 +97,17 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
   return (
     <>
       <div className="flex gap-2">
+        {contractor.status === 'pending' && (
+          <Button
+            size="lg"
+            className="bg-spl-success hover:bg-spl-success-dark text-white h-11"
+            type="button"
+            onClick={() => { setAction('active'); setOpen(true) }}
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Activate
+          </Button>
+        )}
         {contractor.status === 'suspended' && (
           <Button
             size="lg"
@@ -129,7 +140,7 @@ export function ContractorActions({ contractor, currentRole }: ContractorActions
             <DialogDescription className="text-base mt-2">
               Are you sure you want to{' '}
               {action === 'active'
-                ? <strong>reactivate</strong>
+                ? <strong>{contractor.status === 'pending' ? 'activate' : 'reactivate'}</strong>
                 : <strong>suspend</strong>}{' '}
               <strong>{contractor.company_name}</strong>?
             </DialogDescription>
