@@ -15,7 +15,7 @@ export function BrandPanel() {
         <h1 className="mt-5 md:mt-7 text-2xl md:text-4xl font-bold text-white tracking-tight leading-tight">
           Seaview Properties<br />Limited
         </h1>
-        <p className="text-spl-blue-light text-sm md:text-lg mt-1 md:mt-2">Procurement & Contractor Portal</p>
+        <p className="text-spl-blue-light text-sm md:text-lg mt-1 md:mt-2">Procurement &amp; Contractor Portal</p>
 
         <div className="mt-5 md:mt-10 flex items-center gap-2.5 md:gap-3 rounded-sm bg-white/10 border border-white/15 pl-1.5 pr-4 md:pl-2 md:pr-5 py-1.5 md:py-2 backdrop-blur-sm">
           <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 p-1 shadow-md">

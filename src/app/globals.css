@@ -30,7 +30,7 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -145,7 +145,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
   }
   html {
     @apply font-sans;
@@ -154,6 +155,9 @@
     letter-spacing: -0.025em;
     text-wrap: balance;
     overflow-wrap: anywhere;
+  }
+  .portal-content :where(h2, h3, h4) {
+    letter-spacing: -0.012em;
   }
   .portal-content :where(th) {
     font-weight: 600;

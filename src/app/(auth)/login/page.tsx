@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandPanel } from '@/components/auth/BrandPanel'
@@ -51,97 +50,101 @@ function LoginContent() {
       <BrandPanel />
 
       {/* Form panel */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative">
-        <div className="w-full max-w-md space-y-6">
-          <div className="hidden md:block space-y-1">
-            <h2 className="text-3xl font-bold text-slate-800">Sign In</h2>
-            <p className="text-spl-text-muted text-base">Enter your credentials to access the portal</p>
-          </div>
-
-          <Card className="border border-spl-border shadow-lg md:shadow-none md:border-0 bg-white">
-            <CardHeader className="space-y-1 pb-4 md:hidden !px-8 sm:!px-10">
-              <CardTitle className="text-2xl font-bold text-center text-slate-800">Sign In</CardTitle>
-              <CardDescription className="text-center text-spl-text-muted text-base">
-                Enter your credentials to access the portal
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="!px-8 sm:!px-10">
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base font-medium text-slate-700">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="h-12 text-base border-slate-300 focus:border-spl-blue"
-                  />
+      <div className="flex-1 flex flex-col bg-spl-bg">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-10">
+          <div className="w-full max-w-[420px]">
+            <div className="bg-white border border-spl-border shadow-[0_1px_3px_rgba(18,48,71,0.06)]">
+              <div className="h-[3px] w-full bg-spl-blue" />
+              <div className="px-7 sm:px-9 py-8 sm:py-9">
+                <div className="mb-7">
+                  <h2 className="text-[22px] font-bold text-spl-navy tracking-tight">Sign in to your account</h2>
+                  <p className="text-sm text-spl-text-muted mt-1.5">Authorized personnel and registered contractors only</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-base font-medium text-slate-700">
-                    Password
-                  </Label>
-                  <div className="relative">
+
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-[13px] font-medium text-slate-600">
+                      Email Address
+                    </Label>
                     <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Your password"
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@example.com"
                       required
-                      className="h-12 text-base border-slate-300 focus:border-spl-blue pr-12"
+                      autoComplete="email"
+                      className="h-11 text-[15px] border-slate-300 rounded-md focus-visible:border-spl-blue"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
                   </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="text-[13px] font-medium text-slate-600">
+                        Password
+                      </Label>
+                      <a href="/forgot-password" className="text-[13px] text-spl-blue hover:text-spl-blue-dark font-medium">
+                        Forgot password?
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Your password"
+                        required
+                        autoComplete="current-password"
+                        className="h-11 text-[15px] border-slate-300 rounded-md focus-visible:border-spl-blue pr-11"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-11 text-[15px] font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white rounded-md"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Signing in…
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
+                  </Button>
+                </form>
+
+                <div className="mt-7 pt-5 border-t border-slate-100 text-center">
+                  <p className="text-sm text-slate-500">
+                    New contractor?{' '}
+                    <a href="/register" className="text-spl-blue hover:text-spl-blue-dark font-semibold">
+                      Register your company
+                    </a>
+                  </p>
                 </div>
-
-                <div className="flex justify-end">
-                  <a href="/forgot-password" className="text-sm text-spl-blue hover:text-spl-blue-dark font-medium">
-                    Forgot your password?
-                  </a>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 text-base font-semibold bg-spl-blue hover:bg-spl-blue-dark text-white"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
-              </form>
-
-              <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-                <p className="text-sm text-slate-500">
-                  New contractor?{' '}
-                  <a href="/register" className="text-spl-blue hover:text-spl-blue-dark font-semibold">
-                    Register your company
-                  </a>
-                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <p className="text-center text-slate-400 text-xs">
-            © {new Date().getFullYear()} Seaview Properties Limited. All rights reserved.
-          </p>
+          </div>
         </div>
+
+        {/* Corporate footer */}
+        <footer className="border-t border-spl-border px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[12px] text-slate-400">
+            <p>© {new Date().getFullYear()} Seaview Properties Limited. All rights reserved.</p>
+            <p>A subsidiary of the Nigerian Ports Authority</p>
+          </div>
+        </footer>
       </div>
     </div>
   )
